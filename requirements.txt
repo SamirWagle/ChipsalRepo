@@ -1,0 +1,73 @@
+# CHiPSAL 2026 - Subtask A: Hate Speech Detection
+# Python Dependencies
+
+# =============================================================================
+# CORE LIBRARIES
+# =============================================================================
+numpy>=1.21.0
+pandas>=1.3.0
+scikit-learn>=1.0.0
+matplotlib>=3.4.0
+seaborn>=0.11.0
+tqdm>=4.62.0
+pillow>=9.0.0
+
+# =============================================================================
+# DEEP LEARNING FRAMEWORKS
+# =============================================================================
+torch>=2.0.0
+torchvision>=0.15.0
+
+# =============================================================================
+# TRANSFORMERS & VLMs (Vision-Language Models)
+# =============================================================================
+transformers>=4.40.0          # Required for latest VLMs
+accelerate>=0.25.0            # For efficient model loading
+bitsandbytes>=0.42.0          # 4-bit quantization for large models
+peft>=0.8.0                   # LoRA fine-tuning
+sentencepiece>=0.1.99         # Tokenizer support
+
+# =============================================================================
+# VISION ENCODERS & MULTIMODAL MODELS
+# =============================================================================
+open-clip-torch>=2.24.0       # EVA-CLIP, OpenCLIP models
+timm>=0.9.12                  # Vision models (ResNet, ViT, Swin, etc.)
+einops>=0.7.0                 # Tensor operations
+
+# =============================================================================
+# OCR FOR NEPALI TEXT
+# =============================================================================
+easyocr>=1.7.0                # Nepali OCR extraction
+
+# =============================================================================
+# IMAGE PROCESSING & AUGMENTATION
+# =============================================================================
+opencv-python>=4.8.0
+albumentations>=1.3.0
+
+# =============================================================================
+# EXPERIMENT TRACKING (Optional)
+# =============================================================================
+wandb>=0.16.0
+
+# =============================================================================
+# UTILITIES
+# =============================================================================
+python-dotenv>=1.0.0
+PyYAML>=6.0
+safetensors>=0.4.0            # Safe model serialization
+huggingface-hub>=0.20.0       # Model downloads
+
+# =============================================================================
+# OPTIONAL: FOR SPECIFIC SOTA MODELS
+# =============================================================================
+# Uncomment these if using specific models:
+
+# For BLIP-2:
+# salesforce-lavis>=1.0.0
+
+# For Qwen2-VL:
+# qwen-vl-utils>=0.0.2
+
+# For Flash Attention (faster training):
+# flash-attn>=2.5.0
