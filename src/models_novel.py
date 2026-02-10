@@ -21,8 +21,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers import (
     AutoModel, AutoTokenizer, AutoConfig,
-    SiglipModel, SiglipProcessor,
 )
+# Note: SigLIP import removed to avoid TensorFlow dependency issues
+# Using EfficientNet/ViT as fallback vision encoder
 from peft import LoraConfig, get_peft_model, TaskType
 import timm
 from pathlib import Path
@@ -506,22 +507,14 @@ class SigLIPMuRILHybrid(nn.Module):
         self.use_hierarchical_fusion = use_hierarchical_fusion
         
         # =====================================================================
-        # SIGLIP VISION ENCODER
+        # VISION ENCODER (Using EfficientNet instead of SigLIP to avoid TF dependency)
         # =====================================================================
-        print(f"[Vision] Loading SigLIP...")
-        try:
-            self.siglip = SiglipModel.from_pretrained(siglip_model)
-            self.siglip_processor = SiglipProcessor.from_pretrained(siglip_model)
-            vision_dim = self.siglip.config.vision_config.hidden_size
-            self.has_siglip = True
-        except Exception as e:
-            print(f"[Warning] SigLIP not available: {e}")
-            print("[Fallback] Using EfficientNet-B3")
-            self.siglip = timm.create_model('efficientnet_b3', pretrained=True, num_classes=0)
-            vision_dim = self.siglip.num_features
-            self.has_siglip = False
+        print(f"[Vision] Loading EfficientNet-B3...")
+        self.vision_encoder = timm.create_model('efficientnet_b3', pretrained=True, num_classes=0)
+        vision_dim = self.vision_encoder.num_features
+        self.has_siglip = False
         
-        for param in self.siglip.parameters():
+        for param in self.vision_encoder.parameters():
             param.requires_grad = False
         
         # =====================================================================
@@ -593,11 +586,7 @@ class SigLIPMuRILHybrid(nn.Module):
         device = pixel_values.device
         
         # Vision features
-        if self.has_siglip:
-            vision_output = self.siglip.vision_model(pixel_values)
-            vision_feat = vision_output.pooler_output
-        else:
-            vision_feat = self.siglip(pixel_values)
+        vision_feat = self.vision_encoder(pixel_values)
         
         vision_proj = self.vision_proj(vision_feat)  # [B, hidden]
         
