@@ -126,7 +126,7 @@ EVAL_METRICS = ["accuracy", "f1_macro", "precision", "recall", "confusion_matrix
 # DEVICE CONFIGURATION
 # =============================================================================
 import torch
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps")
 NUM_WORKERS = 4 if torch.cuda.is_available() else 2
 
 print(f"[CONFIG] Device: {DEVICE}")

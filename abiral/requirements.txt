@@ -1,0 +1,24 @@
+# Core deep learning
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Transformers and pretrained models
+transformers>=4.30.0
+tokenizers>=0.13.0
+
+# Data processing
+pandas>=1.5.0
+numpy>=1.23.0
+pillow>=9.0.0
+scikit-learn>=1.2.0
+
+# Visualization
+matplotlib>=3.5.0
+seaborn>=0.12.0
+tqdm>=4.65.0
+
+# Model acceleration (optional)
+accelerate>=0.20.0
+
+# Additional utilities
+opencv-python>=4.7.0
