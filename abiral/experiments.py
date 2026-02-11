@@ -43,7 +43,8 @@ def experiment_text_only():
         NUM_EPOCHS=50,
         BATCH_SIZE=16,
         LEARNING_RATE=1e-4,
-        K_FOLDS=5
+        K_FOLDS=5,
+        
     )
     
     summary, save_dir = main(config)
