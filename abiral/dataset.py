@@ -186,11 +186,12 @@ def create_dataloaders(csv_path,
     )
     
     # Create dataloaders
+    # Note: num_workers=0 to avoid multiprocessing issues on Windows
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=4 if torch.cuda.is_available() else 0,
+        num_workers=0,
         pin_memory=True if torch.cuda.is_available() else False
     )
     
@@ -198,7 +199,7 @@ def create_dataloaders(csv_path,
         val_dataset,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=4 if torch.cuda.is_available() else 0,
+        num_workers=0,
         pin_memory=True if torch.cuda.is_available() else False
     )
     

@@ -82,7 +82,7 @@ class TextEncoder(nn.Module):
         
         # Load model and tokenizer
         print(f"Loading text model: {model_name}")
-        self.model = AutoModel.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name, use_safetensors=True)
         
         # Get feature dimension
         self.feature_dim = self.model.config.hidden_size

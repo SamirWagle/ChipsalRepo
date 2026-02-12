@@ -3,6 +3,8 @@ Configuration file for multimodal classification experiments
 All hyperparameters and model settings are hot-pluggable here
 """
 
+import torch
+
 class Config:
     # ==================== Data Configuration ====================
     IMAGE_FOLDER = "path/to/images"  # Path to image folder
@@ -72,7 +74,9 @@ class Config:
     SCHEDULER_STEP_SIZE = 10  # For step scheduler
     
     # ==================== Device Configuration ====================
-    DEVICE = 'mps'  # Options: 'cuda', 'cpu', 'mps'
+    # Auto-detect available device (CUDA on Windows/Linux, CPU otherwise)
+    # Note: MPS (Apple Silicon) is not used as it may not be available in all PyTorch builds
+    DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     # ==================== Logging Configuration ====================
     SAVE_DIR = "outputs"  # Directory to save models and results
