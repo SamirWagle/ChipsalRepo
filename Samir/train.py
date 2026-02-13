@@ -5,10 +5,14 @@ Supports K-fold cross-validation with all fusion strategies
 
 import os
 import json
+import sys
 import torch
 import numpy as np
 import random
 from datetime import datetime
+
+# Add current directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import Config
 from dataset import create_dataloaders, get_class_distribution

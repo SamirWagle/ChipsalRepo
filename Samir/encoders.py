@@ -23,7 +23,7 @@ class ImageEncoder(nn.Module):
         
         # Load CLIP model
         print(f"Loading CLIP model: {model_name}")
-        self.clip_model = CLIPModel.from_pretrained(model_name)
+        self.clip_model = CLIPModel.from_pretrained(model_name, use_safetensors=True)
         self.vision_model = self.clip_model.vision_model
         
         # Get feature dimension

@@ -245,8 +245,10 @@ class TextEncoder(nn.Module):
 
 # %% [code]
 # ============================
-# 6. FUSION MODELS
+# 6. FUSION MODELS (ALL STRATEGIES)
 # ============================
+
+# Unimodal Model (for image-only or text-only)
 class UnimodalModel(nn.Module):
     def __init__(self, input_dim, num_classes, hidden_dim=256, dropout=0.3):
         super().__init__()
@@ -263,6 +265,90 @@ class UnimodalModel(nn.Module):
     def forward(self, features):
         return self.classifier(features), features
 
+# Early Fusion: Concatenate features immediately
+class EarlyFusionModel(nn.Module):
+    def __init__(self, image_dim, text_dim, num_classes, hidden_dim=256, dropout=0.3):
+        super().__init__()
+        fusion_dim = image_dim + text_dim
+        
+        self.classifier = nn.Sequential(
+            nn.Linear(fusion_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim // 2, num_classes)
+        )
+    
+    def forward(self, image_features, text_features):
+        fused = torch.cat([image_features, text_features], dim=1)
+        logits = self.classifier(fused)
+        return logits, fused
+
+# Late Fusion - Voting: Separate classifiers, vote on predictions
+class LateFusionVotingModel(nn.Module):
+    def __init__(self, image_dim, text_dim, num_classes, hidden_dim=256, dropout=0.3):
+        super().__init__()
+        self.image_classifier = nn.Sequential(
+            nn.Linear(image_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, num_classes)
+        )
+        self.text_classifier = nn.Sequential(
+            nn.Linear(text_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, num_classes)
+        )
+    
+    def forward(self, image_features, text_features):
+        image_logits = self.image_classifier(image_features)
+        text_logits = self.text_classifier(text_features)
+        
+        # Average logits
+        combined_logits = (image_logits + text_logits) / 2
+        combined_features = torch.cat([image_features, text_features], dim=1)
+        
+        return combined_logits, combined_features
+
+# Late Fusion - Bagging: Weighted average
+class LateFusionBaggingModel(nn.Module):
+    def __init__(self, image_dim, text_dim, num_classes, hidden_dim=256, dropout=0.3):
+        super().__init__()
+        self.image_classifier = nn.Sequential(
+            nn.Linear(image_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, num_classes)
+        )
+        self.text_classifier = nn.Sequential(
+            nn.Linear(text_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, num_classes)
+        )
+        
+        # Learnable weights for combining predictions
+        self.weight_image = nn.Parameter(torch.tensor(0.5))
+        self.weight_text = nn.Parameter(torch.tensor(0.5))
+    
+    def forward(self, image_features, text_features):
+        image_logits = self.image_classifier(image_features)
+        text_logits = self.text_classifier(text_features)
+        
+        # Weighted combination with normalization
+        w1 = torch.sigmoid(self.weight_image)
+        w2 = torch.sigmoid(self.weight_text)
+        total = w1 + w2
+        
+        combined_logits = (w1 * image_logits + w2 * text_logits) / total
+        combined_features = torch.cat([image_features, text_features], dim=1)
+        
+        return combined_logits, combined_features
+
+# Hybrid Fusion: Attention-based (BEST)
 class HybridFusionModel(nn.Module):
     def __init__(self, image_dim, text_dim, num_classes, hidden_dim=256, 
                  dropout=0.3, num_heads=4):
@@ -301,7 +387,7 @@ class HybridFusionModel(nn.Module):
 
 # %% [code]
 # ============================
-# 7. COMPLETE MODEL
+# 7. COMPLETE MODEL (WITH ALL FUSION STRATEGIES)
 # ============================
 class MultimodalClassifier(nn.Module):
     def __init__(self, config, num_classes):
@@ -309,6 +395,7 @@ class MultimodalClassifier(nn.Module):
         self.config = config
         self.use_modality = config.USE_MODALITY
         
+        # Initialize encoders based on modality
         if self.use_modality in ['image', 'both']:
             self.image_encoder = ImageEncoder(
                 config.CLIP_MODEL_NAME,
@@ -321,6 +408,7 @@ class MultimodalClassifier(nn.Module):
                 freeze=config.FREEZE_TEXT_ENCODER
             )
         
+        # Initialize fusion model based on modality and strategy
         if self.use_modality == 'image':
             self.fusion_model = UnimodalModel(
                 config.IMAGE_FEATURE_DIM, num_classes,
@@ -331,12 +419,30 @@ class MultimodalClassifier(nn.Module):
                 config.TEXT_FEATURE_DIM, num_classes,
                 config.HIDDEN_DIM, config.DROPOUT
             )
-        else:
-            self.fusion_model = HybridFusionModel(
-                config.IMAGE_FEATURE_DIM, config.TEXT_FEATURE_DIM,
-                num_classes, config.HIDDEN_DIM, config.DROPOUT,
-                config.HYBRID_ATTENTION_HEADS
-            )
+        else:  # both modalities
+            if config.FUSION_STRATEGY == 'early':
+                self.fusion_model = EarlyFusionModel(
+                    config.IMAGE_FEATURE_DIM, config.TEXT_FEATURE_DIM,
+                    num_classes, config.HIDDEN_DIM, config.DROPOUT
+                )
+            elif config.FUSION_STRATEGY == 'late_voting':
+                self.fusion_model = LateFusionVotingModel(
+                    config.IMAGE_FEATURE_DIM, config.TEXT_FEATURE_DIM,
+                    num_classes, config.HIDDEN_DIM, config.DROPOUT
+                )
+            elif config.FUSION_STRATEGY == 'late_bagging':
+                self.fusion_model = LateFusionBaggingModel(
+                    config.IMAGE_FEATURE_DIM, config.TEXT_FEATURE_DIM,
+                    num_classes, config.HIDDEN_DIM, config.DROPOUT
+                )
+            elif config.FUSION_STRATEGY == 'hybrid':
+                self.fusion_model = HybridFusionModel(
+                    config.IMAGE_FEATURE_DIM, config.TEXT_FEATURE_DIM,
+                    num_classes, config.HIDDEN_DIM, config.DROPOUT,
+                    config.HYBRID_ATTENTION_HEADS
+                )
+            else:
+                raise ValueError(f"Unknown fusion strategy: {config.FUSION_STRATEGY}")
     
     def forward(self, images=None, text_inputs=None, attention_mask=None):
         if self.use_modality == 'image':
@@ -345,7 +451,7 @@ class MultimodalClassifier(nn.Module):
         elif self.use_modality == 'text':
             txt_features = self.text_encoder(text_inputs, attention_mask)
             return self.fusion_model(txt_features)
-        else:
+        else:  # both
             img_features = self.image_encoder(images)
             txt_features = self.text_encoder(text_inputs, attention_mask)
             return self.fusion_model(img_features, txt_features)
@@ -686,6 +792,49 @@ for fold_idx, (train_idx, val_idx) in enumerate(kfold.split(df)):
     plt.xlabel('Predicted Label')
     plt.savefig(os.path.join(save_dir, f'confusion_matrix_fold_{fold_idx}.png'))
     plt.close()
+    
+    # Plot training history
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    
+    # Loss
+    axes[0, 0].plot(history['train_loss'], label='Train')
+    axes[0, 0].plot(history['val_loss'], label='Validation')
+    axes[0, 0].set_title('Loss Over Epochs')
+    axes[0, 0].set_xlabel('Epoch')
+    axes[0, 0].set_ylabel('Loss')
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
+    
+    # Accuracy
+    axes[0, 1].plot(history['train_acc'], label='Train')
+    axes[0, 1].plot(history['val_acc'], label='Validation')
+    axes[0, 1].set_title('Accuracy Over Epochs')
+    axes[0, 1].set_xlabel('Epoch')
+    axes[0, 1].set_ylabel('Accuracy')
+    axes[0, 1].legend()
+    axes[0, 1].grid(True, alpha=0.3)
+    
+    # F1 Score
+    axes[1, 0].plot(history['val_f1'], label='Validation F1', color='green')
+    axes[1, 0].set_title('F1 Score Over Epochs')
+    axes[1, 0].set_xlabel('Epoch')
+    axes[1, 0].set_ylabel('F1 Score')
+    axes[1, 0].legend()
+    axes[1, 0].grid(True, alpha=0.3)
+    
+    # Train vs Val Accuracy Gap
+    gap = [train - val for train, val in zip(history['train_acc'], history['val_acc'])]
+    axes[1, 1].plot(gap, label='Overfitting Gap', color='red')
+    axes[1, 1].axhline(y=0, color='black', linestyle='--', linewidth=0.5)
+    axes[1, 1].set_title('Train-Val Accuracy Gap (Overfitting Indicator)')
+    axes[1, 1].set_xlabel('Epoch')
+    axes[1, 1].set_ylabel('Accuracy Gap')
+    axes[1, 1].legend()
+    axes[1, 1].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, f'training_history_fold_{fold_idx}.png'))
+    plt.close()
 
 # %% [code]
 # ============================
@@ -730,3 +879,215 @@ with open(os.path.join(save_dir, 'summary.json'), 'w') as f:
 
 print(f"\n✓ Results saved to {save_dir}")
 print("\nTraining complete! 🎉")
+
+# %% [markdown]
+# # 📊 Visualization - Training Curves Across All Folds
+
+# %% [code]
+# ============================
+# 15. AGGREGATE VISUALIZATIONS
+# ============================
+# Load all fold histories and plot together
+from glob import glob
+import json as json_lib
+
+fold_files = sorted(glob(os.path.join(save_dir, 'fold_*_results.json')))
+
+if fold_files:
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    
+    for fold_file in fold_files:
+        with open(fold_file, 'r') as f:
+            data = json_lib.load(f)
+            history = data['history']
+            fold_num = int(os.path.basename(fold_file).split('_')[1])
+            
+            # Plot loss
+            axes[0, 0].plot(history['val_loss'], label=f'Fold {fold_num + 1}', alpha=0.7)
+            
+            # Plot accuracy
+            axes[0, 1].plot(history['val_acc'], label=f'Fold {fold_num + 1}', alpha=0.7)
+            
+            # Plot F1
+            axes[1, 0].plot(history['val_f1'], label=f'Fold {fold_num + 1}', alpha=0.7)
+            
+            # Plot train-val gap
+            gap = [t - v for t, v in zip(history['train_acc'], history['val_acc'])]
+            axes[1, 1].plot(gap, label=f'Fold {fold_num + 1}', alpha=0.7)
+    
+    axes[0, 0].set_title('Validation Loss - All Folds', fontsize=14, fontweight='bold')
+    axes[0, 0].set_xlabel('Epoch')
+    axes[0, 0].set_ylabel('Loss')
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
+    
+    axes[0, 1].set_title('Validation Accuracy - All Folds', fontsize=14, fontweight='bold')
+    axes[0, 1].set_xlabel('Epoch')
+    axes[0, 1].set_ylabel('Accuracy')
+    axes[0, 1].legend()
+    axes[0, 1].grid(True, alpha=0.3)
+    
+    axes[1, 0].set_title('Validation F1 Score - All Folds', fontsize=14, fontweight='bold')
+    axes[1, 0].set_xlabel('Epoch')
+    axes[1, 0].set_ylabel('F1 Score')
+    axes[1, 0].legend()
+    axes[1, 0].grid(True, alpha=0.3)
+    
+    axes[1, 1].set_title('Overfitting Gap - All Folds', fontsize=14, fontweight='bold')
+    axes[1, 1].set_xlabel('Epoch')
+    axes[1, 1].set_ylabel('Train - Val Accuracy')
+    axes[1, 1].axhline(y=0, color='black', linestyle='--', linewidth=1)
+    axes[1, 1].legend()
+    axes[1, 1].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, 'all_folds_training_curves.png'), dpi=150)
+    plt.show()
+
+# %% [markdown]
+# # 🔮 Inference - Make Predictions on Test Data
+# 
+# Use the trained model to make predictions on new images/text
+
+# %% [code]
+# ============================
+# 16. INFERENCE FUNCTIONS
+# ============================
+class InferenceEngine:
+    """Make predictions on new data"""
+    
+    def __init__(self, model, config, image_transform, text_tokenizer):
+        self.model = model
+        self.config = config
+        self.device = torch.device(config.DEVICE)
+        self.model.to(self.device)
+        self.model.eval()
+        self.image_transform = image_transform
+        self.text_tokenizer = text_tokenizer
+    
+    def predict_single(self, image_path, text=""):
+        """Predict for a single image + text"""
+        # Load image
+        pixel_values = None
+        if self.config.USE_MODALITY in ['image', 'both']:
+            try:
+                image = Image.open(image_path).convert('RGB')
+                pixel_values = self.image_transform(image).unsqueeze(0).to(self.device)
+            except Exception as e:
+                print(f"Error loading {image_path}: {e}")
+                return None, None
+        
+        # Process text
+        input_ids = attention_mask = None
+        if self.config.USE_MODALITY in ['text', 'both']:
+            text_encoding = self.text_tokenizer(text)
+            input_ids = text_encoding['input_ids'].unsqueeze(0).to(self.device)
+            attention_mask = text_encoding['attention_mask'].unsqueeze(0).to(self.device)
+        
+        # Predict
+        with torch.no_grad():
+            logits, _ = self.model(pixel_values, input_ids, attention_mask)
+            probs = torch.softmax(logits, dim=1)
+            pred = torch.argmax(probs, dim=1)
+        
+        return pred.item(), probs[0].cpu().numpy()
+    
+    def predict_batch(self, df, image_folder):
+        """Predict for entire dataframe"""
+        predictions = []
+        probabilities = []
+        
+        for idx, row in tqdm(df.iterrows(), total=len(df), desc='Predicting'):
+            # Get image filename
+            img_filename = str(row[self.config.IMAGE_COL])
+            if not img_filename.endswith(('.png', '.jpg', '.jpeg')):
+                img_filename = f"{img_filename}.png"
+            
+            img_path = os.path.join(image_folder, img_filename)
+            
+            # Get text
+            text = str(row[self.config.TEXT_COL]) if pd.notna(row[self.config.TEXT_COL]) else ""
+            
+            # Predict
+            pred, probs = self.predict_single(img_path, text)
+            
+            predictions.append(pred)
+            probabilities.append(probs)
+        
+        return predictions, probabilities
+
+# Example: Load best model and make predictions
+print("\n" + "="*80)
+print("INFERENCE EXAMPLE")
+print("="*80)
+
+# Load best model from fold 0
+best_model_path = os.path.join(save_dir, 'best_model_fold_0.pt')
+
+if os.path.exists(best_model_path):
+    # Create new model
+    inference_model = MultimodalClassifier(config, num_classes)
+    inference_model.load_state_dict(torch.load(best_model_path))
+    
+    # Create inference engine
+    engine = InferenceEngine(inference_model, config, image_transform, text_tokenizer)
+    
+    print(f"✓ Model loaded from {best_model_path}")
+    print("\nTo make predictions on test data:")
+    print("1. Upload test images to Kaggle")
+    print("2. Create test dataframe with image filenames and text")
+    print("3. Use: predictions, probs = engine.predict_batch(test_df, test_image_folder)")
+    
+    # Example on a single training sample
+    sample_row = df.iloc[0]
+    img_filename = str(sample_row[config.IMAGE_COL])
+    if not img_filename.endswith(('.png', '.jpg', '.jpeg')):
+        img_filename = f"{img_filename}.png"
+    sample_img_path = os.path.join(config.IMAGE_FOLDER, img_filename)
+    sample_text = str(sample_row[config.TEXT_COL])
+    
+    if os.path.exists(sample_img_path):
+        pred, probs = engine.predict_single(sample_img_path, sample_text)
+        print(f"\n📝 Example Prediction:")
+        print(f"  Image: {img_filename}")
+        print(f"  Text: {sample_text[:50]}...")
+        print(f"  Predicted Class: {pred}")
+        print(f"  Probabilities: {probs}")
+        print(f"  True Label: {sample_row[config.LABEL_COL]}")
+else:
+    print("⚠️ Model file not found. Train the model first!")
+
+# %% [markdown]
+# # 💾 Create Submission File (for Kaggle Competitions)
+
+# %% [code]
+# ============================
+# 17. CREATE SUBMISSION
+# ============================
+# Uncomment and modify this section if you have a test set
+
+"""
+# Load test data
+test_df = pd.read_csv('/kaggle/input/your-test-dataset/test.csv')
+test_image_folder = '/kaggle/input/your-test-dataset/test_images'
+
+# Make predictions
+predictions, probabilities = engine.predict_batch(test_df, test_image_folder)
+
+# Create submission file
+submission = pd.DataFrame({
+    'id': test_df['id'],  # or whatever your ID column is
+    'label': predictions
+})
+
+submission.to_csv('submission.csv', index=False)
+print("✓ Submission file created: submission.csv")
+print(submission.head())
+"""
+
+print("\n" + "="*80)
+print("ALL DONE! 🎉🎊")
+print("="*80)
+print(f"\nFinal Results: {results_df['accuracy'].mean():.4f} ± {results_df['accuracy'].std():.4f}")
+print(f"Best Fold: Fold {results_df['accuracy'].idxmax() + 1} ({results_df['accuracy'].max():.4f})")
+print(f"\nAll outputs saved to: {save_dir}")

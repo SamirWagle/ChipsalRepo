@@ -13,6 +13,7 @@ ENV/
 .env/
 meme-env/
 abiral/outputs/*
+samir/outputs/*
 # =============================================================================
 # PYTHON CACHE
 # =============================================================================
@@ -49,6 +50,10 @@ transformers_cache/
 # =============================================================================
 outputs/
 abiral/Output/
+samir/Output/
+samir/outputs
+
+
 abiral/outputs/
 logs/
 runs/
