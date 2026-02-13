@@ -1,10 +1,20 @@
 """
 Generate Submission CSV for Test Release Data
-Simple script to generate predictions with index, label columns
+Enhanced with interactive folder and model selection
 
 Usage:
-    python generate_submission.py
-    python generate_submission.py --single  (use single model instead of ensemble)
+    # Original mode (backward compatible)
+    python generate_submission_enhanced.py
+    python generate_submission_enhanced.py --single
+    python generate_submission_enhanced.py --model_dir Output/image_original_20260212_132844
+    
+    # New interactive mode
+    python generate_submission_enhanced.py --interactive
+    python generate_submission_enhanced.py -i
+    
+    # Direct selection mode
+    python generate_submission_enhanced.py --select-folder --select-model
+    python generate_submission_enhanced.py -sf -sm
 """
 
 import torch
@@ -24,8 +34,167 @@ from config import Config
 from inference import load_model_for_inference, InferenceEngine
 
 
+class ModelSelector:
+    """Modular component for interactive model/folder selection"""
+    
+    def __init__(self, base_output_dir='Output'):
+        self.base_output_dir = Path(base_output_dir)
+    
+    def list_output_folders(self):
+        """List all available output folders containing models"""
+        if not self.base_output_dir.exists():
+            print(f"Error: Output directory '{self.base_output_dir}' not found")
+            return []
+        
+        folders = []
+        for folder in sorted(self.base_output_dir.iterdir()):
+            if folder.is_dir():
+                # Check if it has model files
+                model_files = list(folder.glob("best_model_fold_*.pt"))
+                if len(model_files) > 0:
+                    folders.append({
+                        'path': folder,
+                        'name': folder.name,
+                        'model_count': len(model_files)
+                    })
+        return folders
+    
+    def select_folder_interactive(self):
+        """Interactive folder selection"""
+        folders = self.list_output_folders()
+        
+        if not folders:
+            print("\nNo model folders found in Output directory!")
+            return None
+        
+        print("\n" + "="*80)
+        print("AVAILABLE MODEL FOLDERS")
+        print("="*80)
+        
+        for i, folder_info in enumerate(folders, 1):
+            print(f"{i:2d}. {folder_info['name']}")
+            print(f"    └─ {folder_info['model_count']} model(s)")
+        
+        print("="*80)
+        
+        while True:
+            try:
+                choice = input(f"\nSelect folder (1-{len(folders)}) or 'q' to quit: ").strip()
+                
+                if choice.lower() == 'q':
+                    return None
+                
+                choice_idx = int(choice) - 1
+                if 0 <= choice_idx < len(folders):
+                    selected = folders[choice_idx]
+                    print(f"\n✓ Selected: {selected['name']}")
+                    return selected['path']
+                else:
+                    print(f"Invalid choice. Enter 1-{len(folders)}")
+            except ValueError:
+                print("Invalid input. Enter a number or 'q'")
+    
+    def list_models_in_folder(self, folder_path):
+        """List all models in a folder"""
+        folder_path = Path(folder_path)
+        model_files = sorted(list(folder_path.glob("best_model_fold_*.pt")))
+        
+        models = []
+        for model_file in model_files:
+            # Extract fold number
+            fold_num = model_file.stem.split('_')[-1]
+            models.append({
+                'path': model_file,
+                'name': model_file.name,
+                'fold': fold_num
+            })
+        
+        return models
+    
+    def select_models_interactive(self, folder_path):
+        """Interactive model selection (single or multiple)"""
+        models = self.list_models_in_folder(folder_path)
+        
+        if not models:
+            print(f"\nNo models found in {folder_path}")
+            return None, None
+        
+        print("\n" + "="*80)
+        print("AVAILABLE MODELS")
+        print("="*80)
+        
+        for i, model_info in enumerate(models, 1):
+            print(f"{i:2d}. {model_info['name']} (Fold {model_info['fold']})")
+        
+        print("="*80)
+        print("\nOptions:")
+        print("  - Single model: Enter one number (e.g., '1')")
+        print("  - Multiple models: Enter numbers separated by commas (e.g., '1,2,3')")
+        print("  - All models (ensemble): Enter 'all'")
+        print("  - Quit: Enter 'q'")
+        
+        while True:
+            choice = input(f"\nYour selection: ").strip()
+            
+            if choice.lower() == 'q':
+                return None, None
+            
+            if choice.lower() == 'all':
+                print(f"\n✓ Selected: ALL {len(models)} models (ensemble)")
+                return [m['path'] for m in models], True
+            
+            try:
+                # Parse comma-separated choices
+                choices = [int(c.strip()) - 1 for c in choice.split(',')]
+                
+                # Validate
+                if all(0 <= c < len(models) for c in choices):
+                    selected_models = [models[i]['path'] for i in choices]
+                    
+                    use_ensemble = len(selected_models) > 1
+                    
+                    print(f"\n✓ Selected {len(selected_models)} model(s):")
+                    for i in choices:
+                        print(f"  - {models[i]['name']}")
+                    
+                    if use_ensemble:
+                        print("  → Will use ENSEMBLE (majority voting)")
+                    else:
+                        print("  → Will use SINGLE model")
+                    
+                    return selected_models, use_ensemble
+                else:
+                    print(f"Invalid choice. Enter numbers between 1-{len(models)}")
+            except ValueError:
+                print("Invalid input. Enter numbers separated by commas, 'all', or 'q'")
+
+
 def main():
-    parser = argparse.ArgumentParser(description='Generate submission CSV')
+    parser = argparse.ArgumentParser(
+        description='Generate submission CSV with optional interactive selection',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Original backward-compatible mode
+  python generate_submission_enhanced.py
+  python generate_submission_enhanced.py --single
+  python generate_submission_enhanced.py --model_dir Output/image_original_20260212_132844
+  
+  # Interactive mode (select folder and models)
+  python generate_submission_enhanced.py --interactive
+  python generate_submission_enhanced.py -i
+  
+  # Select folder interactively, but use all models
+  python generate_submission_enhanced.py --select-folder
+  python generate_submission_enhanced.py -sf
+  
+  # Select specific models interactively
+  python generate_submission_enhanced.py --select-model
+  python generate_submission_enhanced.py -sm
+        """
+    )
+    
+    # Original arguments (backward compatible)
     parser.add_argument('--model_dir', type=str, 
                         default='Output/image_original_20260212_132844',
                         help='Directory containing trained models')
@@ -41,14 +210,46 @@ def main():
     parser.add_argument('--single', action='store_true',
                         help='Use single best model instead of ensemble')
     
+    # New interactive selection arguments
+    parser.add_argument('-i', '--interactive', action='store_true',
+                        help='Interactive mode: select both folder and models')
+    parser.add_argument('-sf', '--select-folder', action='store_true',
+                        help='Interactively select output folder')
+    parser.add_argument('-sm', '--select-model', action='store_true',
+                        help='Interactively select specific models')
+    
     args = parser.parse_args()
     
     print("=" * 80)
     print("GENERATING SUBMISSION FOR TEST RELEASE")
     print("=" * 80)
     
-    # Setup paths
+    # Initialize selector
+    selector = ModelSelector()
+    
+    # Determine selection mode
+    interactive_mode = args.interactive or args.select_folder or args.select_model
+    
+    selected_models = None
+    use_ensemble = None
     model_dir = Path(args.model_dir)
+    
+    # Interactive folder selection
+    if args.interactive or args.select_folder:
+        selected_folder = selector.select_folder_interactive()
+        if selected_folder is None:
+            print("\nSelection cancelled.")
+            return
+        model_dir = selected_folder
+    
+    # Interactive model selection
+    if args.interactive or args.select_model:
+        selected_models, use_ensemble = selector.select_models_interactive(model_dir)
+        if selected_models is None:
+            print("\nSelection cancelled.")
+            return
+    
+    # Setup paths
     test_csv = Path(args.test_csv)
     test_images = Path(args.test_images)
     
@@ -73,27 +274,37 @@ def main():
     test_df = pd.read_csv(test_csv)
     print(f"Test samples: {len(test_df)}")
     
-    # Find available models
-    model_files = sorted(list(model_dir.glob("best_model_fold_*.pt")))
-    print(f"\nFound {len(model_files)} model(s)")
-    
-    if len(model_files) == 0:
-        raise FileNotFoundError(f"No models found in {model_dir}")
-    
-    # Use ensemble or single model
-    use_ensemble = len(model_files) > 1 and not args.single
-    models_to_use = model_files if use_ensemble else [model_files[len(model_files)//2]]
+    # Determine which models to use
+    if selected_models is not None:
+        # Use interactively selected models
+        models_to_use = selected_models
+        print(f"\nUsing {len(models_to_use)} interactively selected model(s)")
+    else:
+        # Original logic: find available models
+        model_files = sorted(list(model_dir.glob("best_model_fold_*.pt")))
+        print(f"\nFound {len(model_files)} model(s)")
+        
+        if len(model_files) == 0:
+            raise FileNotFoundError(f"No models found in {model_dir}")
+        
+        # Use ensemble or single model
+        if args.single:
+            models_to_use = [model_files[len(model_files)//2]]
+            use_ensemble = False
+        else:
+            models_to_use = model_files
+            use_ensemble = len(model_files) > 1
     
     print(f"\nStrategy: {'ENSEMBLE' if use_ensemble else 'SINGLE MODEL'}")
     for m in models_to_use:
-        print(f"  Using: {m.name}")
+        print(f"  Using: {Path(m).name}")
     
     # Collect predictions
     all_predictions = []
     
     for model_path in models_to_use:
         print(f"\n{'-'*80}")
-        print(f"Processing: {model_path.name}")
+        print(f"Processing: {Path(model_path).name}")
         
         # Load model
         model, image_transform, text_tokenizer = load_model_for_inference(
@@ -136,7 +347,7 @@ def main():
         all_predictions.append(predictions)
     
     # Ensemble if using multiple models
-    if len(all_predictions) > 1:
+    if len(all_predictions) > 1 and use_ensemble:
         import numpy as np
         all_predictions_array = np.array(all_predictions)
         final_predictions = []
