@@ -63,7 +63,7 @@ def experiment_multimodal_early_fusion():
         USE_MODALITY='both',
         FUSION_STRATEGY='early',
         IMAGE_TYPE='original',
-        NUM_EPOCHS=50,
+        NUM_EPOCHS=20,
         BATCH_SIZE=16,
         LEARNING_RATE=1e-4,
         K_FOLDS=5
