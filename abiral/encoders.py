@@ -16,10 +16,11 @@ class ImageEncoder(nn.Module):
     Image encoder using CLIP vision model
     """
     
-    def __init__(self, model_name='openai/clip-vit-base-patch32', freeze=True):
+    def __init__(self, model_name='openai/clip-vit-base-patch32', freeze=True, unfreeze_last_n=None):
         super().__init__()
         self.model_name = model_name
         self.freeze = freeze
+        self.unfreeze_last_n = unfreeze_last_n
         
         # Load CLIP model
         print(f"Loading CLIP model: {model_name}")
@@ -29,13 +30,43 @@ class ImageEncoder(nn.Module):
         # Get feature dimension
         self.feature_dim = self.clip_model.config.projection_dim
         
-        # Freeze if specified
-        if freeze:
+        # Freeze all parameters first
+        for param in self.vision_model.parameters():
+            param.requires_grad = False
+        
+        # Partial unfreezing: unfreeze last N layers
+        if unfreeze_last_n is not None and unfreeze_last_n > 0:
+            self.unfreeze_last_n_layers(unfreeze_last_n)
+            self.freeze = False  # Mark as unfrozen for forward pass
+            print(f"Image encoder: Unfroze last {unfreeze_last_n} layers")
+        elif not freeze:
+            # Fully unfreeze if freeze=False and no partial setting
             for param in self.vision_model.parameters():
-                param.requires_grad = False
+                param.requires_grad = True
+            print("Image encoder fully unfrozen")
+        else:
             print("Image encoder frozen")
         
-        self.vision_model.eval() if freeze else self.vision_model.train()
+        self.vision_model.eval() if freeze and unfreeze_last_n is None else self.vision_model.train()
+    
+    def unfreeze_last_n_layers(self, n):
+        """Unfreeze the last N transformer layers of CLIP vision model"""
+        # CLIP ViT architecture: vision_model.encoder.layers is a ModuleList
+        total_layers = len(self.vision_model.encoder.layers)
+        layers_to_unfreeze = min(n, total_layers)
+        
+        # Unfreeze last N layers
+        for i in range(total_layers - layers_to_unfreeze, total_layers):
+            for param in self.vision_model.encoder.layers[i].parameters():
+                param.requires_grad = True
+        
+        # Also unfreeze the final layer norm and projection
+        for param in self.vision_model.post_layernorm.parameters():
+            param.requires_grad = True
+        for param in self.clip_model.visual_projection.parameters():
+            param.requires_grad = True
+        
+        print(f"  Unfroze layers {total_layers - layers_to_unfreeze} to {total_layers - 1} (last {layers_to_unfreeze} layers)")
     
     def forward(self, pixel_values):
         """
@@ -64,10 +95,11 @@ class TextEncoder(nn.Module):
     Text encoder using BGE-M3 or E5-Large
     """
     
-    def __init__(self, model_type='bge-m3', model_name=None, freeze=True):
+    def __init__(self, model_type='bge-m3', model_name=None, freeze=True, unfreeze_last_n=None):
         super().__init__()
         self.model_type = model_type
         self.freeze = freeze
+        self.unfreeze_last_n = unfreeze_last_n
         
         # Set model name
         if model_name is None:
@@ -87,13 +119,45 @@ class TextEncoder(nn.Module):
         # Get feature dimension
         self.feature_dim = self.model.config.hidden_size
         
-        # Freeze if specified
-        if freeze:
+        # Freeze all parameters first
+        for param in self.model.parameters():
+            param.requires_grad = False
+        
+        # Partial unfreezing: unfreeze last N layers
+        if unfreeze_last_n is not None and unfreeze_last_n > 0:
+            self.unfreeze_last_n_layers(unfreeze_last_n)
+            self.freeze = False  # Mark as unfrozen for forward pass
+            print(f"Text encoder: Unfroze last {unfreeze_last_n} layers")
+        elif not freeze:
+            # Fully unfreeze if freeze=False and no partial setting
             for param in self.model.parameters():
-                param.requires_grad = False
+                param.requires_grad = True
+            print("Text encoder fully unfrozen")
+        else:
             print("Text encoder frozen")
         
-        self.model.eval() if freeze else self.model.train()
+        self.model.eval() if freeze and unfreeze_last_n is None else self.model.train()
+    
+    def unfreeze_last_n_layers(self, n):
+        """Unfreeze the last N transformer layers of the text model"""
+        # BGE-M3/E5 use encoder.layer for transformer layers
+        if hasattr(self.model, 'encoder') and hasattr(self.model.encoder, 'layer'):
+            total_layers = len(self.model.encoder.layer)
+            layers_to_unfreeze = min(n, total_layers)
+            
+            # Unfreeze last N layers
+            for i in range(total_layers - layers_to_unfreeze, total_layers):
+                for param in self.model.encoder.layer[i].parameters():
+                    param.requires_grad = True
+            
+            # Also unfreeze pooler if it exists
+            if hasattr(self.model, 'pooler') and self.model.pooler is not None:
+                for param in self.model.pooler.parameters():
+                    param.requires_grad = True
+            
+            print(f"  Unfroze layers {total_layers - layers_to_unfreeze} to {total_layers - 1} (last {layers_to_unfreeze} layers)")
+        else:
+            print(f"  Warning: Could not find encoder layers in {self.model_name}")
     
     def mean_pooling(self, model_output, attention_mask):
         """
@@ -204,9 +268,13 @@ def create_encoders(config):
     # Create image encoder if needed
     if config.USE_MODALITY in ['image', 'both']:
         if config.IMAGE_ENCODER == 'clip':
+            # Check if partial unfreezing is enabled
+            unfreeze_last_n = getattr(config, 'UNFREEZE_IMAGE_LAYERS', None)
+            
             image_encoder = ImageEncoder(
                 model_name=config.CLIP_MODEL_NAME,
-                freeze=config.FREEZE_IMAGE_ENCODER
+                freeze=config.FREEZE_IMAGE_ENCODER if unfreeze_last_n is None else True,
+                unfreeze_last_n=unfreeze_last_n
             )
             config.IMAGE_FEATURE_DIM = image_encoder.feature_dim
         else:
@@ -214,10 +282,14 @@ def create_encoders(config):
     
     # Create text encoder if needed
     if config.USE_MODALITY in ['text', 'both']:
+        # Check if partial unfreezing is enabled
+        unfreeze_last_n = getattr(config, 'UNFREEZE_TEXT_LAYERS', None)
+        
         text_encoder = TextEncoder(
             model_type=config.TEXT_ENCODER,
             model_name=config.BGE_MODEL_NAME if config.TEXT_ENCODER == 'bge-m3' else config.E5_MODEL_NAME,
-            freeze=config.FREEZE_TEXT_ENCODER
+            freeze=config.FREEZE_TEXT_ENCODER if unfreeze_last_n is None else True,
+            unfreeze_last_n=unfreeze_last_n
         )
         config.TEXT_FEATURE_DIM = text_encoder.feature_dim
     

@@ -76,13 +76,13 @@ abiral/Output/
 # DATA FILES (Too large for GitHub)
 # =============================================================================
 # Uncomment if you don't want to track images/data:
-# train/
-# eval/
-# test/
-# *.jpg
-# *.jpeg
-# *.png
-# *.gif
+train/
+eval/
+test/
+*.jpg
+*.jpeg
+*.png
+*.gif
 
 # =============================================================================
 # JUPYTER NOTEBOOKS

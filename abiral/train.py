@@ -79,7 +79,7 @@ def main(config):
         json.dump(config_dict, f, indent=4)
     
     # Get class weights for imbalanced data
-    class_weights = get_class_distribution(config.CSV_PATH, config.LABEL_COL)
+    class_weights = get_class_distribution(config.CSV_PATH, config.LABEL_COL, config=config)
     config.CLASS_WEIGHTS = class_weights
     
     # Create preprocessing functions

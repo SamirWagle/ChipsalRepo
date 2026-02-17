@@ -99,8 +99,7 @@ def get_scheduler(optimizer, config, steps_per_epoch=None):
             optimizer,
             mode='min',
             factor=config.SCHEDULER_FACTOR,
-            patience=config.SCHEDULER_PATIENCE,
-            verbose=True
+            patience=config.SCHEDULER_PATIENCE
         )
     else:
         raise ValueError(f"Unknown scheduler: {config.SCHEDULER_TYPE}")
@@ -247,12 +246,17 @@ def train_fold(model, train_loader, val_loader, config, fold_idx, save_dir):
     device = torch.device(config.DEVICE)
     model = model.to(device)
     
-    # Get class weights for imbalanced data
+    # Get class weights and label smoothing
+    label_smoothing = getattr(config, 'LABEL_SMOOTHING', 0.0)
+    
     if hasattr(config, 'CLASS_WEIGHTS') and config.CLASS_WEIGHTS is not None:
         class_weights = config.CLASS_WEIGHTS.to(device)
-        criterion = nn.CrossEntropyLoss(weight=class_weights)
+        criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=label_smoothing)
     else:
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
+    
+    if label_smoothing > 0:
+        print(f"  Using label smoothing: {label_smoothing}")
     
     # Create optimizer and scheduler
     optimizer = get_optimizer(model, config)

@@ -234,13 +234,29 @@ def load_model_for_inference(model_path, config):
             with open(config_json_path, 'r') as f:
                 saved_config = json.load(f)
             
-            # Update config with critical parameters from saved config
-            # Only update if not explicitly set by user
-            if config.NUM_CLASSES is None:
-                config.NUM_CLASSES = saved_config.get('NUM_CLASSES', 2)
+            # Load ALL architecture-critical parameters from saved config
+            # These must match exactly how the model was trained
+            architecture_params = [
+                'USE_MODALITY', 'FUSION_STRATEGY', 'NUM_CLASSES',
+                'IMAGE_TYPE', 'IMAGE_ENCODER', 'TEXT_ENCODER',
+                'HIDDEN_DIM', 'DROPOUT', 'HYBRID_ATTENTION_HEADS',
+                'CLIP_MODEL_NAME', 'BGE_MODEL_NAME', 'E5_MODEL_NAME',
+                'IMAGE_FEATURE_DIM', 'TEXT_FEATURE_DIM',
+                'FREEZE_IMAGE_ENCODER', 'FREEZE_TEXT_ENCODER',
+                'UNFREEZE_IMAGE_LAYERS', 'UNFREEZE_TEXT_LAYERS',
+                'MAX_TEXT_LENGTH',
+            ]
+            
+            for param in architecture_params:
+                if param in saved_config and saved_config[param] is not None:
+                    setattr(config, param, saved_config[param])
             
             print(f"Loaded model config from {config_json_path}")
-            print(f"Number of classes: {config.NUM_CLASSES}")
+            print(f"  Modality: {config.USE_MODALITY}")
+            print(f"  Fusion strategy: {getattr(config, 'FUSION_STRATEGY', 'N/A')}")
+            print(f"  Hidden dim: {getattr(config, 'HIDDEN_DIM', 'N/A')}")
+            print(f"  Dropout: {getattr(config, 'DROPOUT', 'N/A')}")
+            print(f"  Num classes: {config.NUM_CLASSES}")
     
     # Ensure NUM_CLASSES is set
     if config.NUM_CLASSES is None:
