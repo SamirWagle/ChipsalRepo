@@ -3,6 +3,8 @@ Configuration file for multimodal classification experiments
 All hyperparameters and model settings are hot-pluggable here
 """
 
+import torch
+
 class Config:
     # ==================== Data Configuration ====================
     IMAGE_FOLDER = "path/to/images"  # Path to image folder
@@ -30,11 +32,29 @@ class Config:
     CLIP_MODEL_NAME = 'openai/clip-vit-base-patch32'
     FREEZE_IMAGE_ENCODER = True
     
+    TEXT_MODEL_OPTIONS = {
+    # === BEST FOR NEPALI ===
+    "muril": "google/muril-base-cased",           # Google's Indian Languages (includes Nepali)
+    "muril_large": "google/muril-large-cased",    # Larger version, better accuracy
+    "nepberta": "Shushant/NepBERTa",              # Native Nepali BERT (0.8B Nepali words)
+    "nepali_roberta": "IRIIS/Nepali-RoBERTa-110M", # IRIIS 2024 Nepali model
+    
+    # === MULTILINGUAL (Fallback) ===
+    "xlm_roberta": "xlm-roberta-base",            # 100 languages including Nepali
+    "xlm_roberta_large": "xlm-roberta-large",     # Larger multilingual
+    "mbert": "bert-base-multilingual-cased",      # Original multilingual BERT
+    }
     # Text encoder
     TEXT_ENCODER = 'bge-m3'  # Options: 'bge-m3', 'e5-large'
     BGE_MODEL_NAME = 'BAAI/bge-m3'
     E5_MODEL_NAME = 'intfloat/e5-large-v2'
     FREEZE_TEXT_ENCODER = True
+    
+    # Partial unfreezing (advanced: unfreeze only last N layers)
+    # If set to a number, overrides FREEZE_* settings and unfreezes last N layers
+    # CLIP ViT has 12 layers, BGE-M3 has 24 layers
+    UNFREEZE_IMAGE_LAYERS = None  # e.g., 3 = unfreeze last 3 layers of CLIP
+    UNFREEZE_TEXT_LAYERS = None   # e.g., 4 = unfreeze last 4 layers of BGE-M3
     
     # Feature dimensions (will be set based on model selection)
     IMAGE_FEATURE_DIM = 512  # CLIP ViT-B/32
@@ -50,8 +70,17 @@ class Config:
     # ==================== Training Configuration ====================
     BATCH_SIZE = 16
     LEARNING_RATE = 1e-4
-    WEIGHT_DECAY = 1e-5  # L2 regularization
+    WEIGHT_DECAY = 1e-4  # L2 regularization
     NUM_EPOCHS = 50
+    
+    # Class weight exponent: controls how aggressively minority class is boosted
+    # Formula: weight = (max_count / class_count) ^ exponent
+    # 0.0 = equal weights, 0.3 = mild boost, 0.5 = moderate (default sqrt), 1.0 = full inverse frequency
+    CLASS_WEIGHT_EXPONENT = 0.5
+    
+    # Label smoothing: reduces overconfidence, improves generalization
+    # 0.0 = no smoothing (hard labels), 0.1 = recommended for small datasets
+    LABEL_SMOOTHING = 0.0
     
     # K-Fold cross-validation
     K_FOLDS = 5
@@ -66,13 +95,19 @@ class Config:
     
     # Learning rate scheduler
     USE_SCHEDULER = True
-    SCHEDULER_TYPE = 'cosine'  # Options: 'cosine', 'step', 'plateau'
+    SCHEDULER_TYPE = 'plateau'  # Options: 'cosine', 'step', 'plateau'
     SCHEDULER_PATIENCE = 5  # For plateau scheduler
     SCHEDULER_FACTOR = 0.5  # For plateau and step scheduler
     SCHEDULER_STEP_SIZE = 10  # For step scheduler
     
     # ==================== Device Configuration ====================
-    DEVICE = 'mps'  # Options: 'cuda', 'cpu', 'mps'
+    # Auto-detect available device (CUDA on Windows/Linux, MPS on macOS, CPU otherwise)
+    if torch.cuda.is_available():
+        DEVICE = 'cuda'
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        DEVICE = 'mps'
+    else:
+        DEVICE = 'cpu'
     
     # ==================== Logging Configuration ====================
     SAVE_DIR = "outputs"  # Directory to save models and results

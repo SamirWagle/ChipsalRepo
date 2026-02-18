@@ -49,7 +49,7 @@ class InferenceEngine:
         if self.config.USE_MODALITY in ['image', 'both']:
             try:
                 image = Image.open(image_path).convert('RGB')
-                if self.image_transform:
+                if self.image_transform is not None:
                     pixel_values = self.image_transform(image).unsqueeze(0).to(self.device)
                 else:
                     raise ValueError("Image transform not provided")
@@ -64,7 +64,7 @@ class InferenceEngine:
             if text is None or pd.isna(text):
                 text = ""
             
-            if self.text_tokenizer:
+            if self.text_tokenizer is not None:
                 text_encoding = self.text_tokenizer(text)
                 input_ids = text_encoding['input_ids'].to(self.device)
                 attention_mask = text_encoding['attention_mask'].to(self.device)
@@ -121,8 +121,9 @@ class InferenceEngine:
                 if self.config.USE_MODALITY in ['image', 'both']:
                     try:
                         image = Image.open(image_path).convert('RGB')
-                        pixel_values = self.image_transform(image)
-                        batch_pixel_values.append(pixel_values)
+                        if self.image_transform is not None:
+                            pixel_values = self.image_transform(image)
+                            batch_pixel_values.append(pixel_values)
                     except Exception as e:
                         print(f"Error loading {image_path}: {e}")
                         continue
@@ -131,9 +132,10 @@ class InferenceEngine:
                 if self.config.USE_MODALITY in ['text', 'both']:
                     if pd.isna(text):
                         text = ""
-                    text_encoding = self.text_tokenizer(text)
-                    batch_input_ids.append(text_encoding['input_ids'].squeeze(0))
-                    batch_attention_masks.append(text_encoding['attention_mask'].squeeze(0))
+                    if self.text_tokenizer is not None:
+                        text_encoding = self.text_tokenizer(text)
+                        batch_input_ids.append(text_encoding['input_ids'].squeeze(0))
+                        batch_attention_masks.append(text_encoding['attention_mask'].squeeze(0))
                 
                 valid_indices.append(i + idx)
             
@@ -218,9 +220,48 @@ def load_model_for_inference(model_path, config):
         image_transform: Image preprocessing function
         text_tokenizer: Text tokenizer function
     """
+    import json
     from encoders import create_encoders, get_image_processor, get_text_tokenizer, ImageTransform
     from fusion_models import create_fusion_model
     from model import create_complete_model
+    
+    # Try to load config from model directory (if model_path ends with .pt)
+    if model_path.endswith('.pt'):
+        model_dir = os.path.dirname(model_path)
+        config_json_path = os.path.join(model_dir, 'config.json')
+        
+        if os.path.exists(config_json_path):
+            with open(config_json_path, 'r') as f:
+                saved_config = json.load(f)
+            
+            # Load ALL architecture-critical parameters from saved config
+            # These must match exactly how the model was trained
+            architecture_params = [
+                'USE_MODALITY', 'FUSION_STRATEGY', 'NUM_CLASSES',
+                'IMAGE_TYPE', 'IMAGE_ENCODER', 'TEXT_ENCODER',
+                'HIDDEN_DIM', 'DROPOUT', 'HYBRID_ATTENTION_HEADS',
+                'CLIP_MODEL_NAME', 'BGE_MODEL_NAME', 'E5_MODEL_NAME',
+                'IMAGE_FEATURE_DIM', 'TEXT_FEATURE_DIM',
+                'FREEZE_IMAGE_ENCODER', 'FREEZE_TEXT_ENCODER',
+                'UNFREEZE_IMAGE_LAYERS', 'UNFREEZE_TEXT_LAYERS',
+                'MAX_TEXT_LENGTH',
+            ]
+            
+            for param in architecture_params:
+                if param in saved_config and saved_config[param] is not None:
+                    setattr(config, param, saved_config[param])
+            
+            print(f"Loaded model config from {config_json_path}")
+            print(f"  Modality: {config.USE_MODALITY}")
+            print(f"  Fusion strategy: {getattr(config, 'FUSION_STRATEGY', 'N/A')}")
+            print(f"  Hidden dim: {getattr(config, 'HIDDEN_DIM', 'N/A')}")
+            print(f"  Dropout: {getattr(config, 'DROPOUT', 'N/A')}")
+            print(f"  Num classes: {config.NUM_CLASSES}")
+    
+    # Ensure NUM_CLASSES is set
+    if config.NUM_CLASSES is None:
+        print("Warning: NUM_CLASSES not found in config. Defaulting to 2")
+        config.NUM_CLASSES = 2
     
     # Create encoders
     image_encoder, text_encoder = create_encoders(config)

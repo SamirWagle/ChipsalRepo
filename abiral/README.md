@@ -136,61 +136,114 @@ python experiments.py late_bagging
 python experiments.py all
 ```
 
-### 3. Inference on Test Data
+### 3. Generate Submission CSV (Quick & Easy)
+
+#### **Step 1: Check Your Model Configuration** (Optional but Recommended)
+```bash
+python test.py --mode check --model_path outputs/both_hybrid_original_20240215_143022
+```
+This shows you exactly what modality/fusion was used during training.
+
+#### **Step 2: Generate Submission**
+
+**Recommended: Simple Script**
+```bash
+python generate_submission.py \
+    --model outputs/best_model_fold_0.pt \
+    --test_images test_images \
+    --test_csv test.csv \
+    --output submission.csv
+```
+
+**Match your training configuration:**
+
+| Model Trained | Command |
+|--------------|---------|
+| **Image-only** | `--modality image` |
+| **Text-only** | `--modality text` |
+| **Hybrid fusion** | `--modality both --fusion hybrid` |
+| **Early fusion** | `--modality both --fusion early` |
+| **Late voting** | `--modality both --fusion late_voting` |
+| **Late bagging** | `--modality both --fusion late_bagging` |
+
+**Examples:**
+
+Image-only model:
+```bash
+python generate_submission.py \
+    --model outputs/best_model_fold_0.pt \
+    --test_images test_images \
+    --test_csv test.csv \
+    --output submission.csv \
+    --modality image
+```
+
+Text-only model:
+```bash
+python generate_submission.py \
+    --model outputs/best_model_fold_0.pt \
+    --test_images test_images \
+    --test_csv test.csv \
+    --output submission.csv \
+    --modality text
+```
+
+Hybrid fusion (multimodal):
+```bash
+python generate_submission.py \
+    --model outputs/best_model_fold_0.pt \
+    --test_images test_images \
+    --test_csv test.csv \
+    --output submission.csv \
+    --modality both \
+    --fusion hybrid
+```
+
+#### Alternative: Using test.py
+```bash
+python test.py \
+    --mode submission \
+    --model_path outputs/best_model_fold_0.pt \
+    --image_folder test_images \
+    --csv_path test.csv \
+    --output_path submission.csv
+```
 
 #### Single Image Prediction
 ```bash
 python test.py \
-    --model_path outputs/best_model_fold_0.pt \
     --mode single \
-    --image_path test_image.jpg \
-    --text "Extracted text from image" \
-    --use_modality both \
-    --fusion_strategy hybrid
-```
-
-#### Batch Prediction from CSV
-```bash
-python test.py \
     --model_path outputs/best_model_fold_0.pt \
-    --mode batch \
-    --csv_path test_data.csv \
-    --image_folder test_images/ \
-    --output_path predictions.csv \
-    --use_modality both \
-    --fusion_strategy hybrid
+    --image_path test_image.jpg \
+    --text "Extracted text from image"
 ```
 
 #### Python API for Inference
 ```python
-from inference import load_model_for_inference, InferenceEngine
+from test import get_prediction_csv
 from config import Config
 
-# Load model
+# Generate submission CSV
 config = Config()
-config.update(
-    USE_MODALITY='both',
-    FUSION_STRATEGY='hybrid',
-    NUM_CLASSES=2
+config.update(USE_MODALITY='both', FUSION_STRATEGY='hybrid')
+
+submission_df = get_prediction_csv(
+    test_image_folder='test_images',
+    test_csv_path='test.csv',
+    model_path='outputs/best_model_fold_0.pt',
+    output_path='submission.csv',
+    config=config
 )
-
-model, image_transform, text_tokenizer = load_model_for_inference(
-    'outputs/best_model_fold_0.pt',
-    config
-)
-
-# Create inference engine
-engine = InferenceEngine(model, config, image_transform, text_tokenizer)
-
-# Predict single image
-prediction, probabilities, info = engine.predict_single_image(
-    'test_image.jpg',
-    text='Extracted text'
-)
-
-print(f"Predicted class: {prediction}")
-print(f"Probabilities: {probabilities}")
 ```
+
+**Output Format:**
+```csv
+index,label
+0,1
+1,0
+2,1
+```
+Ready to submit!
 
 ## Ablation Study Experiments
 

@@ -186,11 +186,12 @@ def create_dataloaders(csv_path,
     )
     
     # Create dataloaders
+    # Note: num_workers=0 to avoid multiprocessing issues on Windows
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=4 if torch.cuda.is_available() else 0,
+        num_workers=0,
         pin_memory=True if torch.cuda.is_available() else False
     )
     
@@ -198,16 +199,21 @@ def create_dataloaders(csv_path,
         val_dataset,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=4 if torch.cuda.is_available() else 0,
+        num_workers=0,
         pin_memory=True if torch.cuda.is_available() else False
     )
     
     return train_loader, val_loader, num_classes
 
 
-def get_class_distribution(csv_path, label_col='Label'):
+def get_class_distribution(csv_path, label_col='Label', config=None):
     """
     Get class distribution for computing class weights
+    
+    Args:
+        csv_path: Path to CSV file
+        label_col: Column name for labels
+        config: Optional config object for CLASS_WEIGHT_EXPONENT
     """
     df = pd.read_csv(csv_path)
     class_counts = df[label_col].value_counts().sort_index()
@@ -215,12 +221,25 @@ def get_class_distribution(csv_path, label_col='Label'):
     for class_idx, count in class_counts.items():
         print(f"  Class {class_idx}: {count} samples ({count/len(df)*100:.2f}%)")
     
-    # Compute class weights (inverse frequency)
+    # Compute class weights optimized for macro F1 score
+    # Exponent controls aggressiveness:
+    #   0.0 = equal weights (no boosting)
+    #   0.3 = mild boost (recommended for multimodal)
+    #   0.5 = moderate boost (sqrt, default)
+    #   1.0 = full inverse frequency (aggressive)
+    exponent = 0.5  # default
+    if config is not None:
+        exponent = getattr(config, 'CLASS_WEIGHT_EXPONENT', 0.5)
+    
     total_samples = len(df)
     num_classes = len(class_counts)
+    max_count = class_counts.max()
+    
     class_weights = []
+    print(f"\nClass weights (exponent={exponent}):")
     for i in range(num_classes):
-        weight = total_samples / (num_classes * class_counts[i])
+        weight = (max_count / class_counts[i]) ** exponent
         class_weights.append(weight)
+        print(f"  Class {i}: weight = {weight:.4f}")
     
     return torch.FloatTensor(class_weights)
