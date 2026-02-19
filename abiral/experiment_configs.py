@@ -222,7 +222,7 @@ def image_text_removed_with_text():
         IMAGE_TYPE='text_removed',  # Text removed + extracted text
         BATCH_SIZE=16,
         LEARNING_RATE=1e-4,
-        NUM_EPOCHS=50,
+        NUM_EPOCHS=30,
         K_FOLDS=5
     )
     return main(config)

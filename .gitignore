@@ -13,6 +13,7 @@ ENV/
 .env/
 meme-env/
 abiral/outputs/*
+samir/outputs/*
 # =============================================================================
 # PYTHON CACHE
 # =============================================================================
@@ -48,23 +49,40 @@ transformers_cache/
 # OUTPUT DIRECTORIES
 # =============================================================================
 outputs/
+abiral/Output/
+samir/Output/
+samir/outputs
+
+
+abiral/outputs/
 logs/
 runs/
 wandb/
 mlruns/
 checkpoints/
+abiral/Output/
+# =============================================================================
+# SUBMISSION FILES
+# =============================================================================
+
+# =============================================================================
+# TEST DATA (if large)
+# =============================================================================
+# Uncomment if test_release is large:
+# abiral/test_release/
+# test_release/
 
 # =============================================================================
 # DATA FILES (Too large for GitHub)
 # =============================================================================
 # Uncomment if you don't want to track images/data:
-# train/
-# eval/
-# test/
-# *.jpg
-# *.jpeg
-# *.png
-# *.gif
+train/
+eval/
+test/
+*.jpg
+*.jpeg
+*.png
+*.gif
 
 # =============================================================================
 # JUPYTER NOTEBOOKS

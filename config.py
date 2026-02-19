@@ -62,7 +62,7 @@ TEXT_MODEL_OPTIONS = {
     "mbert": "bert-base-multilingual-cased",      # Original multilingual BERT
 }
 # MuRIL is recommended as it explicitly includes Nepali in training
-DEFAULT_TEXT_MODEL = "muril"
+DEFAULT_TEXT_MODEL = "muril_large"
 
 # Vision Models
 VISION_MODEL_OPTIONS = {

@@ -5,10 +5,14 @@ Supports K-fold cross-validation with all fusion strategies
 
 import os
 import json
+import sys
 import torch
 import numpy as np
 import random
 from datetime import datetime
+
+# Add current directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import Config
 from dataset import create_dataloaders, get_class_distribution
@@ -75,7 +79,7 @@ def main(config):
         json.dump(config_dict, f, indent=4)
     
     # Get class weights for imbalanced data
-    class_weights = get_class_distribution(config.CSV_PATH, config.LABEL_COL)
+    class_weights = get_class_distribution(config.CSV_PATH, config.LABEL_COL, config=config)
     config.CLASS_WEIGHTS = class_weights
     
     # Create preprocessing functions
