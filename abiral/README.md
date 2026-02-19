@@ -349,9 +349,9 @@ If you use this code in your research, please cite:
 
 ```bibtex
 @software{multimodal_classification,
-  title={Multimodal Classification Framework for Hate Speech and Sentiment Analysis},
-  author={Your Name},
-  year={2024}
+  title={Multimodal Classification Framework for Hate Speech and Sentiment Analysis- Chipsal Shared Task},
+  author={Samir Wagle, Abiral Adhikari, Reewaj Khanal},
+  year={2026}
 }
 ```
 
@@ -393,4 +393,4 @@ config.update(
 
 ## Contact
 
-For questions or issues, please open a GitHub issue or contact [your-email@example.com]
+For questions or issues, please open a GitHub issue or contact [waglesameer5@gmail.com, abiraladhikari1222@gmail.com, emailreewaj@gmail.com]
