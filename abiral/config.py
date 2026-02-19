@@ -24,7 +24,8 @@ class Config:
     FUSION_STRATEGY = 'hybrid'  # Options: 'early', 'late_voting', 'late_bagging', 'hybrid'
     
     # Number of classes (auto-detected from data if set to None)
-    NUM_CLASSES = None  # Will be set automatically, or manually set to 2 or 3
+    # NUM_CLASSES = None  # Will be set automatically, or manually set to 2 or 3
+    NUM_CLASSES = 3
     
     # ==================== Model Configuration ====================
     # Image encoder
