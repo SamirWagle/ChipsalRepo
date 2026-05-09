@@ -1,0 +1,45 @@
+graph LR
+    subgraph RawData["Raw Input"]
+        CSV[📄 CSV File<br/>image_path, text, label]
+        ImgFolder[🗂️ Image Folder<br/>Nepali memes<br/>Devanagari text]
+    end
+    
+    subgraph Dataset["Dataset Creation"]
+        Load[MultimodalDataset] --> Sample
+        Sample[Per Sample:<br/>image_path, text, label]
+    end
+    
+    subgraph ImgProcessing["Image Processing"]
+        ImgLoad[PIL Image Load] --> ImgResize
+        ImgResize[Resize 224×224] --> ImgNorm
+        ImgNorm[CLIP Normalize<br/>mean: 0.48, 0.46, 0.41<br/>std: 0.27, 0.26, 0.28] --> ImgTensor
+        ImgTensor[To Tensor<br/>shape: 3×224×224]
+    end
+    
+    subgraph TextProcessing["Text Processing"]
+        TextClean[Text Cleaning] --> Tokenize
+        Tokenize[BGE-M3 Tokenizer<br/>Devanagari-aware] --> Truncate
+        Truncate[Max Length: 128] --> Pad
+        Pad[Padding & Masking] --> TextTensor
+        TextTensor[To Tensor<br/>input_ids, attention_mask]
+    end
+    
+    subgraph Augmentation["Data Augmentation Train Only"]
+        ImgAug[RandomHorizontalFlip<br/>ColorJitter<br/>Random Affine]
+    end
+    
+    CSV & ImgFolder --> Load
+    Sample --> ImgProcessing & TextProcessing
+    
+    ImgResize -.train mode.-> ImgAug
+    ImgAug --> ImgNorm
+    
+    ImgTensor --> Batch
+    TextTensor --> Batch
+    
+    Batch[DataLoader<br/>Batch Size: 16<br/>Shuffle: True train] --> Model[🧠 Model Forward Pass]
+    
+    style CSV fill:#fff5f5,stroke:#fc8181
+    style ImgFolder fill:#fff5f5,stroke:#fc8181
+    style Model fill:#c6f6d5,stroke:#38a169,stroke-width:3px
+    style Augmentation fill:#fef3c7,stroke:#f59e0b

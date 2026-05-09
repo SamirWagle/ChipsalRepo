@@ -1,0 +1,122 @@
+# Model Configuration: M5 - Late Fusion (Soft Voting)
+# Ensemble of M1 (text) and M2 (image) with soft voting
+
+experiment:
+  name: "m5_late_voting"
+  description: "Late fusion ensemble using soft voting"
+  model_type: "late_fusion"
+  fusion_strategy: "voting"
+  seed: 42
+  expected_f1: 0.6511
+
+# Ensemble configuration
+ensemble:
+  base_models:
+    - name: "text_only"
+      config: "configs/m1_text_only.yaml"
+      weight: 1.0
+      checkpoint: "outputs/text_only/best_model.pt"
+    
+    - name: "image_only"
+      config: "configs/m2_image_only.yaml"
+      weight: 1.0
+      checkpoint: "outputs/image_only/best_model.pt"
+  
+  # Voting strategy
+  voting:
+    type: "soft"  # Average predicted probabilities
+    weights: [1.0, 1.0]  # Equal weights for both models
+    temperature: 1.0  # No temperature scaling
+
+# Training strategy
+training:
+  # Train base models first, then combine
+  train_base_models: true
+  
+  # Base model training settings
+  base_model_epochs: 25
+  base_model_patience: 5
+  
+  # Optional: Fine-tune voting weights
+  tune_weights: false
+  weight_tuning_lr: 0.01
+  weight_tuning_epochs: 10
+
+# Cross-validation
+cross_validation:
+  k_folds: 5
+  stratified: true
+  shuffle: true
+
+# Data configuration
+data:
+  train_csv: "train/train.csv"
+  train_images: "train/train_images"
+  max_length: 77
+  image_size: 224
+
+# Metrics
+metrics:
+  primary: "f1_macro"
+  additional:
+    - "accuracy"
+    - "precision_macro"
+    - "recall_macro"
+    - "f1_hate"
+    - "f1_non_hate"
+    - "ensemble_variance"  # Variance across base models
+
+# Checkpointing
+checkpointing:
+  save_best_only: true
+  monitor: "val_f1"
+  mode: "max"
+  save_dir: "outputs/late_voting_{timestamp}"
+  save_base_models: true
+
+# Logging
+logging:
+  level: "INFO"
+  log_dir: "outputs/late_voting_{timestamp}/logs"
+  tensorboard: true
+  log_base_model_predictions: true  # Log individual model outputs
+  wandb:
+    enabled: false
+    project: "chipsal-2026"
+
+# Hardware
+hardware:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+  parallel_inference: false  # Run models sequentially
+
+# Notes
+notes: |
+  Late Fusion - Soft Voting (M5) combines predictions from:
+  - M1: Text-Only (F1: 0.6455)
+  - M2: Image-Only (F1: 0.5952)
+  
+  Expected Performance:
+  - F1-Macro: 0.6511
+  - This is 0.56% better than text-only alone
+  - Simple averaging of probability distributions
+  
+  Key Findings:
+  - Marginal improvement over text-only (0.6455 → 0.6511)
+  - Ensemble gain limited by weak image model (0.5952)
+  - Text model dominates the ensemble
+  - Small dataset limits ensemble effectiveness
+  
+  Voting Strategy:
+  - P_ensemble = (P_text + P_image) / 2
+  - Argmax over averaged probabilities
+  - No learned weights (simple averaging)
+  
+  Training Process:
+  1. Train M1 (text-only) to completion
+  2. Train M2 (image-only) to completion
+  3. Combine predictions via soft voting
+  4. No additional training required
+  
+  Paper Reference: Section 4.3, Table 4, Ensemble Methods

@@ -1,0 +1,141 @@
+# Model Configuration: M6 - Late Fusion (Bagging)
+# Bagging ensemble with k=3 models trained on bootstrap samples
+
+experiment:
+  name: "m6_late_bagging"
+  description: "Late fusion ensemble using bagging (k=3)"
+  model_type: "late_fusion"
+  fusion_strategy: "bagging"
+  seed: 42
+  expected_f1: 0.6267
+
+# Bagging configuration
+bagging:
+  num_models: 3  # k=3 base models
+  bootstrap_ratio: 1.0  # Sample with replacement (same size as original)
+  bootstrap_features: false  # Don't subsample features
+  
+  # Base model configuration
+  base_model:
+    type: "hybrid_fusion"  # Use best model architecture
+    config: "configs/m7_hybrid_fusion.yaml"
+  
+  # Aggregation strategy
+  aggregation:
+    type: "soft_voting"  # Average probabilities
+    weights: [1.0, 1.0, 1.0]  # Equal weights
+
+# Training hyperparameters (for each base model)
+training:
+  learning_rate: 2e-5
+  batch_size: 32
+  num_epochs: 30
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  gradient_clip: 1.0
+  mixed_precision: true
+  
+  optimizer: "adamw"
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  
+  scheduler: "reduce_on_plateau"
+  scheduler_patience: 3
+  scheduler_factor: 0.5
+  
+  early_stopping:
+    patience: 7
+    monitor: "val_f1"
+    mode: "max"
+
+# Data configuration
+data:
+  train_csv: "train/train.csv"
+  train_images: "train/train_images"
+  max_length: 77
+  image_size: 224
+  
+  # Bootstrap sampling
+  bootstrap:
+    enabled: true
+    replacement: true
+    stratified: true  # Maintain class balance
+
+# Cross-validation
+cross_validation:
+  k_folds: 5
+  stratified: true
+  shuffle: true
+
+# Metrics
+metrics:
+  primary: "f1_macro"
+  additional:
+    - "accuracy"
+    - "precision_macro"
+    - "recall_macro"
+    - "f1_hate"
+    - "f1_non_hate"
+    - "ensemble_diversity"  # Measure diversity across models
+    - "ensemble_variance"
+
+# Checkpointing
+checkpointing:
+  save_best_only: true
+  monitor: "val_f1"
+  mode: "max"
+  save_dir: "outputs/late_bagging_{timestamp}"
+  save_all_base_models: true
+
+# Logging
+logging:
+  level: "INFO"
+  log_dir: "outputs/late_bagging_{timestamp}/logs"
+  tensorboard: true
+  log_base_model_predictions: true
+  log_bootstrap_samples: false  # Don't log full bootstrap indices
+  wandb:
+    enabled: false
+    project: "chipsal-2026"
+
+# Hardware
+hardware:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+  parallel_training: false  # Train base models sequentially
+
+# Notes
+notes: |
+  Late Fusion - Bagging (M6) trains k=3 hybrid models on bootstrap samples.
+  
+  Expected Performance:
+  - F1-Macro: 0.6267
+  - This is 8.3% WORSE than single best model (M7: 0.6834)
+  - Underperforms due to small dataset size
+  
+  Key Findings:
+  - Bagging underperforms single best model significantly
+  - Small dataset (N=854/fold) limits ensemble diversity
+  - Bootstrap sampling increases variance without reducing bias
+  - Each base model sees ~63.2% unique samples (1 - 1/e)
+  
+  Why Bagging Fails Here:
+  1. Dataset too small for effective bootstrap sampling
+  2. Models overfit to their bootstrap samples
+  3. Reduced effective training set size per model
+  4. Diversity comes at cost of individual model quality
+  
+  Training Process:
+  1. Create 3 bootstrap samples from training data
+  2. Train 3 hybrid models (M7 architecture) independently
+  3. Each model has different bootstrap seed
+  4. Combine predictions via soft voting
+  5. Report ensemble performance
+  
+  Comparison:
+  - M7 (single): 0.6834 F1
+  - M6 (bagging k=3): 0.6267 F1
+  - Performance drop: -8.3%
+  
+  Paper Reference: Section 4.3, Table 4, Discussion on ensemble limitations

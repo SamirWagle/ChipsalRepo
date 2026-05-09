@@ -1,0 +1,133 @@
+cff-version: 1.2.0
+message: "If you use this software or findings in your research, please cite it as below."
+title: "Cross-Modal Attention Fusion for Nepali Hate Speech Detection in Multimodal Memes"
+abstract: "Official implementation of our CHiPSAL 2026 submission presenting a novel hybrid cross-modal attention fusion architecture with dynamic gating for detecting hate speech in Devanagari-scripted social media memes. Our system achieves 0.6834 F1-macro through selective fine-tuning of CLIP ViT-B/32 and BGE-M3 encoders with 4-head self-attention and learnable modality gating."
+authors:
+  - family-names: "Thapa"
+    given-names: "Samir"
+    email: "samir@example.com"
+    affiliation: "[Your Institution]"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+  # Add co-authors here
+type: software
+license: MIT
+repository-code: "https://github.com/yourusername/chipsal-multimodal-hate-detection"
+url: "https://github.com/yourusername/chipsal-multimodal-hate-detection"
+keywords:
+  - hate-speech-detection
+  - multimodal-learning
+  - cross-modal-attention
+  - devanagari
+  - nepali-nlp
+  - low-resource-languages
+  - meme-analysis
+  - social-media-moderation
+  - clip
+  - bge-m3
+  - fusion-networks
+  - dynamic-gating
+version: 1.0.0
+date-released: "2026-03-01"
+preferred-citation:
+  type: conference-paper
+  title: "TeamNepAI@CHiPSAL 2026: Cross-Modal Attention Fusion with Dynamic Gating for Devanagari Hate Speech Detection in Multimodal Memes"
+  authors:
+    - family-names: "Thapa"
+      given-names: "Samir"
+    # Add co-authors here
+  conference:
+    name: "Proceedings of the Second Workshop on Challenges in Processing South Asian Languages (CHiPSAL 2026)"
+  year: 2026
+  month: 5
+  publisher:
+    name: "LREC"
+references:
+  - type: conference-paper
+    title: "Multimodal Hate and Sentiment Understanding in Low-Resource Text-Embedded Images for Online Safety and Digital Well-being"
+    authors:
+      - family-names: "Thapa"
+        given-names: "Surendrabikram"
+      - family-names: "Shiwakoti"
+        given-names: "Shuvam"
+      - family-names: "Shah"
+        given-names: "Siddhant Bikram"
+      - family-names: "Rauniyar"
+        given-names: "Kritesh"
+    conference:
+      name: "Proceedings of the Second Workshop on Challenges in Processing South Asian Languages (CHiPSAL)"
+    year: 2026
+    notes: "Shared Task Overview Paper"
+  - type: conference-paper
+    title: "A multimodal prompt-based framework for analyzing code-mixed and low-resource memes"
+    authors:
+      - family-names: "Thapa"
+        given-names: "Surendrabikram"
+      - family-names: "Veeramani"
+        given-names: "Hariram"
+      - family-names: "Hu"
+        given-names: "Liang"
+    conference:
+      name: "Proceedings of the International AAAI Conference on Web and Social Media (ICWSM)"
+    year: 2025
+    notes: "Dataset Source 1"
+  - type: conference-paper
+    title: "CrisisHateMM: Multimodal analysis of directed and undirected hate speech in crisis-related social media memes"
+    authors:
+      - family-names: "Bhandari"
+        given-names: "Aashish"
+      - family-names: "Shah"
+        given-names: "Siddhant B."
+      - family-names: "Thapa"
+        given-names: "Surendrabikram"
+    conference:
+      name: "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops"
+    year: 2023
+    notes: "Dataset Source 2"
+  - type: article
+    title: "Learning Transferable Visual Models From Natural Language Supervision"
+    authors:
+      - family-names: "Radford"
+        given-names: "Alec"
+      - family-names: "Kim"
+        given-names: "Jong Wook"
+      - family-names: "Hallacy"
+        given-names: "Chris"
+      - family-names: "Ramesh"
+        given-names: "Aditya"
+      - family-names: "Goh"
+        given-names: "Gabriel"
+      - family-names: "Agarwal"
+        given-names: "Sandhini"
+      - family-names: "Sastry"
+        given-names: "Girish"
+      - family-names: "Askell"
+        given-names: "Amanda"
+      - family-names: "Mishkin"
+        given-names: "Pamela"
+      - family-names: "Clark"
+        given-names: "Jack"
+      - family-names: "Krueger"
+        given-names: "Gretchen"
+      - family-names: "Sutskever"
+        given-names: "Ilya"
+    journal: "Proceedings of the 38th International Conference on Machine Learning (ICML)"
+    year: 2021
+    notes: "CLIP Vision-Language Model"
+  - type: article
+    title: "BGE M3-Embedding: Multi-Lingual, Multi-Functionality, Multi-Granularity Text Embeddings Through Self-Knowledge Distillation"
+    authors:
+      - family-names: "Chen"
+        given-names: "Jianlv"
+      - family-names: "Xiao"
+        given-names: "Shitao"
+      - family-names: "Zhang"
+        given-names: "Peitian"
+      - family-names: "Luo"
+        given-names: "Kun"
+      - family-names: "Lian"
+        given-names: "Defu"
+      - family-names: "Liu"
+        given-names: "Zheng"
+    journal: "arXiv preprint arXiv:2402.03216"
+    year: 2024
+    notes: "BGE-M3 Multilingual Embeddings"

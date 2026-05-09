@@ -1,0 +1,163 @@
+# M7: Hybrid Fusion (Cross-Modal Attention + Dynamic Gating) - PRIMARY SYSTEM
+# Paper: Table 4, Row 1 (Best Performance)
+# Expected F1-Macro: 0.6834
+
+experiment_name: m7_hybrid_fusion
+model_type: hybrid
+
+# Encoder Configuration
+visual_encoder:
+  model_name: "openai/clip-vit-base-patch32"
+  freeze: false
+  unfreeze_last_n_layers: 2
+
+text_encoder:
+  model_name: "BAAI/bge-m3"
+  freeze: false
+  unfreeze_last_n_layers: 4
+
+# Fusion Architecture
+fusion:
+  type: hybrid_attention_gating
+  hidden_dim: 256
+  attention_heads: 4
+  attention_dropout: 0.1
+  use_gating: true
+  gating_activation: softmax
+
+# Projection Layers
+projection:
+  visual_input_dim: 512
+  text_input_dim: 1024
+  output_dim: 256
+  use_layer_norm: true
+
+# Classification Head
+classifier:
+  hidden_dims: [512, 256, 128]
+  dropout: 0.5
+  activation: relu
+  use_batch_norm: false
+
+# Training Configuration
+training:
+  num_epochs: 30
+  batch_size: 32
+  learning_rate: 2.0e-5
+  weight_decay: 1.0e-2
+  warmup_steps: 200
+  warmup_ratio: 0.1
+
+# Optimizer
+optimizer:
+  type: AdamW
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  amsgrad: false
+
+# Scheduler
+scheduler:
+  type: ReduceLROnPlateau
+  mode: max
+  factor: 0.5
+  patience: 5
+  min_lr: 1.0e-7
+  cooldown: 2
+
+# Loss Configuration
+loss:
+  type: CrossEntropyLoss
+  label_smoothing: 0.1
+  class_weight_gamma: 0.3
+
+# Data Configuration
+data:
+  max_length: 77
+  image_size: 224
+  train_csv: "train/train.csv"
+  image_dir: "train/train_images/"
+  text_column: "text"
+  label_column: "label"
+  image_column: "index"
+
+# Augmentation
+augmentation:
+  image_aug_prob: 0.3
+  image_augs:
+    - RandomBrightnessContrast:
+        brightness_limit: 0.2
+        contrast_limit: 0.2
+        p: 0.5
+    - HueSaturationValue:
+        hue_shift_limit: 20
+        sat_shift_limit: 30
+        val_shift_limit: 20
+        p: 0.3
+    - GaussNoise:
+        var_limit: [10.0, 50.0]
+        p: 0.2
+    - MotionBlur:
+        blur_limit: 7
+        p: 0.2
+  text_aug_prob: 0.1
+  text_augs:
+    - synonym_replacement
+    - random_swap
+
+# Training Settings
+early_stopping:
+  patience: 10
+  min_delta: 0.001
+  mode: max
+  metric: f1_macro
+
+# Regularization
+regularization:
+  gradient_clip_norm: 1.0
+  use_amp: true
+  gradient_accumulation_steps: 1
+
+# Logging
+logging:
+  log_interval: 10
+  save_best_only: true
+  save_last: true
+  tensorboard: true
+  wandb: false
+  log_gradients: false
+  log_attention_weights: true
+
+# Cross-Validation
+cross_validation:
+  k_folds: 5
+  stratified: true
+  shuffle: true
+
+# Reproducibility
+seed: 42
+
+# Hardware
+device: cuda
+num_workers: 4
+pin_memory: true
+persistent_workers: true
+
+# Checkpointing
+checkpoint:
+  save_dir: "outputs/m7_hybrid_fusion"
+  monitor: f1_macro
+  mode: max
+  save_top_k: 3
+  every_n_epochs: 1
+
+# Evaluation
+evaluation:
+  metrics:
+    - accuracy
+    - f1_macro
+    - f1_weighted
+    - precision_macro
+    - recall_macro
+    - confusion_matrix
+  save_predictions: true
+  save_attention_maps: true

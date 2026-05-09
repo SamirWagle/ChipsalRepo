@@ -1,0 +1,26 @@
+graph LR
+    subgraph Models["8 Model Configurations"]
+        M7[🥇 M7: Hybrid Fusion<br/>F1: 0.6834 - Acc: 70.15%<br/>⭐ BEST MODEL]
+        M1[🥈 M1: Text-Only<br/>F1: 0.6455 - Acc: 72.39%]
+        M8[🥉 M8: Hybrid Text-Removed<br/>F1: 0.6436 - Acc: 70.15%]
+        M5[4️⃣ M5: Late Voting<br/>F1: 0.6511 - Acc: 69.40%]
+        M4[5️⃣ M4: Early Fusion<br/>F1: 0.6140 - Acc: 69.40%]
+        M6[6️⃣ M6: Late Bagging<br/>F1: 0.6267 - Acc: 65.67%]
+        M2[7️⃣ M2: Image-Only<br/>F1: 0.5952 - Acc: 67.91%]
+        M3[8️⃣ M3: Image Text-Removed<br/>F1: 0.5535 - Acc: 63.43%]
+    end
+    
+    M7 -."+5.9% vs M1".-> Insights1[✅ Multimodal Superiority]
+    M1 -."+16.6% vs M2".-> Insights2[✅ Text Dominance]
+    M2 -."+5.8% vs M3".-> Insights3[✅ Typography Contribution]
+    M7 -."+11.3% vs M4".-> Insights4[✅ Hybrid > Early Fusion]
+    M6 --> Insights5[❌ Ensemble Fails Low-Resource]
+    
+    style M7 fill:#c6f6d5,stroke:#38a169,stroke-width:4px
+    style M1 fill:#e6fffa,stroke:#319795,stroke-width:2px
+    style M8 fill:#fef5e7,stroke:#f39c12,stroke-width:2px
+    style Insights1 fill:#d4edda,stroke:#28a745
+    style Insights2 fill:#d4edda,stroke:#28a745
+    style Insights3 fill:#d4edda,stroke:#28a745
+    style Insights4 fill:#d4edda,stroke:#28a745
+    style Insights5 fill:#f8d7da,stroke:#dc3545

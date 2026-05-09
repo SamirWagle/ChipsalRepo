@@ -1,0 +1,114 @@
+MIT License
+
+Copyright (c) 2026 Samir Thapa and Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Third-Party Licenses
+
+This project uses the following third-party components with their respective licenses:
+
+### CLIP (OpenAI)
+- License: MIT License
+- Repository: https://github.com/openai/CLIP
+- Copyright (c) 2021 OpenAI
+
+### BGE-M3 (BAAI)
+- License: Apache License 2.0
+- Repository: https://github.com/FlagOpen/FlagEmbedding
+- Copyright (c) 2024 Beijing Academy of Artificial Intelligence
+
+### Hugging Face Transformers
+- License: Apache License 2.0
+- Repository: https://github.com/huggingface/transformers
+- Copyright (c) 2018 The Hugging Face team
+
+### PyTorch
+- License: BSD-style License (modified BSD)
+- Repository: https://github.com/pytorch/pytorch
+- Copyright (c) 2016-present, Facebook Inc.
+
+### Pillow (PIL Fork)
+- License: HPND License (Historical Permission Notice and Disclaimer)
+- Repository: https://github.com/python-pillow/Pillow
+- Copyright © 1995-2011 Fredrik Lundh and contributors
+- Copyright © 2010-2024 Jeffrey A. Clark (Alex) and contributors
+
+### NumPy
+- License: BSD 3-Clause License
+- Repository: https://github.com/numpy/numpy
+- Copyright (c) 2005-2024, NumPy Developers
+
+### scikit-learn
+- License: BSD 3-Clause License
+- Repository: https://github.com/scikit-learn/scikit-learn
+- Copyright (c) 2007-2024 The scikit-learn developers
+
+## Dataset License
+
+The CHiPSAL 2026 Shared Task dataset is provided by the task organizers for research purposes only. Please cite the following papers if you use the dataset:
+
+```bibtex
+@inproceedings{thapa2026sharedtask,
+  title={Multimodal Hate and Sentiment Understanding in Low-Resource Text-Embedded Images},
+  author={Thapa, Surendrabikram and Shiwakoti, Shuvam and Shah, Siddhant Bikram and Rauniyar, Kritesh and others},
+  booktitle={Proceedings of CHiPSAL 2026},
+  year={2026}
+}
+
+@inproceedings{thapa2025multimodal,
+  title={A multimodal prompt-based framework for analyzing code-mixed and low-resource memes},
+  author={Thapa, Surendrabikram and Veeramani, Hariram and Hu, Liang and others},
+  booktitle={ICWSM},
+  year={2025}
+}
+
+@inproceedings{bhandari2023crisishatemm,
+  title={CrisisHateMM: Multimodal analysis of directed and undirected hate speech},
+  author={Bhandari, Aashish and Shah, Siddhant B and Thapa, Surendrabikram and others},
+  booktitle={CVPR},
+  year={2023}
+}
+```
+
+## Additional Terms
+
+1. **Attribution**: When using this code or findings in academic work, please cite our CHiPSAL 2026 paper (see CITATION.cff).
+
+2. **Dataset Usage**: The dataset is provided under the terms specified by the CHiPSAL 2026 Shared Task organizers. Commercial use may be restricted.
+
+3. **Pre-trained Models**: CLIP and BGE-M3 pre-trained weights are subject to their respective licenses (MIT and Apache 2.0).
+
+4. **Research Use**: This software is primarily intended for academic and research purposes. For commercial deployment of hate speech detection systems, additional ethical review and bias auditing is recommended.
+
+5. **No Warranty for Production Use**: While this code implements state-of-the-art methods, it should not be deployed in production content moderation systems without thorough testing, bias analysis, and human oversight.
+
+## Ethics and Responsible Use
+
+Users of this software should:
+- Respect the privacy of individuals depicted in memes
+- Acknowledge the cultural context of Nepali/Devanagari content
+- Not use this system to target or discriminate against individuals or groups
+- Implement human review for high-stakes decisions
+- Consider false positive/negative rates in deployment contexts
+- Regularly audit for bias and fairness issues
+
+For detailed ethical considerations, see Section 10 of our paper (PaperPortion/FINAL_paper_report.md).

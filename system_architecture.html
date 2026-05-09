@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Modal Attention Fusion - System Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header .subtitle {
+            font-size: 1.1em;
+            opacity: 0.95;
+            margin-top: 5px;
+        }
+
+        .header .info {
+            font-size: 0.95em;
+            margin-top: 15px;
+            opacity: 0.9;
+        }
+
+        .architecture {
+            padding: 40px;
+        }
+
+        .layer {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .layer-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+        }
+
+        .layer-title .number {
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.1em;
+        }
+
+        .component-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .component {
+            flex: 1;
+            min-width: 250px;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .component:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .component-title {
+            font-weight: bold;
+            font-size: 1.15em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .component-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+        }
+
+        .component-details {
+            font-size: 0.95em;
+            line-height: 1.8;
+        }
+
+        .component-details ul {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .component-details li {
+            margin-bottom: 5px;
+        }
+
+        /* Color schemes for different components */
+        .input-component {
+            background: #fff5f5;
+            border-color: #fc8181;
+            color: #742a2a;
+        }
+
+        .preprocessing-component {
+            background: #fffaf0;
+            border-color: #f6ad55;
+            color: #7c2d12;
+        }
+
+        .encoder-component {
+            background: #f0fff4;
+            border-color: #68d391;
+            color: #22543d;
+        }
+
+        .fusion-component {
+            background: #ebf8ff;
+            border-color: #63b3ed;
+            color: #2c5282;
+        }
+
+        .classifier-component {
+            background: #faf5ff;
+            border-color: #b794f4;
+            color: #44337a;
+        }
+
+        .output-component {
+            background: #fff5f7;
+            border-color: #f687b3;
+            color: #702459;
+        }
+
+        .arrow {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 2em;
+            color: #667eea;
+        }
+
+        .fusion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .fusion-model {
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #63b3ed;
+            background: white;
+        }
+
+        .fusion-model-title {
+            font-weight: bold;
+            color: #2c5282;
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+
+        .fusion-model-perf {
+            font-size: 0.9em;
+            color: #4a5568;
+            margin-top: 8px;
+        }
+
+        .best-model {
+            border-color: #48bb78;
+            background: #f0fff4;
+            position: relative;
+        }
+
+        .best-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #48bb78;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .metrics-box {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+            margin-top: 20px;
+        }
+
+        .metrics-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .metric-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: #4a5568;
+            margin-top: 5px;
+        }
+
+        .legend {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .legend-title {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            margin-right: 10px;
+            border: 2px solid;
+        }
+
+        .footer {
+            background: #2d3748;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .footer-note {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .component:hover {
+                transform: none;
+            }
+        }
+
+        .highlight-box {
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .highlight-title {
+            font-weight: bold;
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tech-badge {
+            background: #667eea;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .code-snippet {
+            background: #1a202c;
+            color: #a0aec0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .flow-line {
+            border-left: 3px dashed #cbd5e0;
+            height: 30px;
+            margin: 0 auto;
+            width: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🧠 System Architecture Diagram</h1>
+            <div class="subtitle">Cross-Modal Attention Fusion for Nepali Hate Speech Detection in Multimodal Memes</div>
+            <div class="info">
+                <strong>CHiPSAL 2026 Shared Task</strong> | TeamNepAI | Subtask A: Multimodal Hate and Sentiment Understanding
+            </div>
+            <div class="tech-stack">
+                <span class="tech-badge">PyTorch 2.0+</span>
+                <span class="tech-badge">CLIP ViT-B/32</span>
+                <span class="tech-badge">BGE-M3</span>
+                <span class="tech-badge">Transformers</span>
+                <span class="tech-badge">Python 3.10+</span>
+            </div>
+        </div>
+
+        <!-- Compact Flowchart -->
+        <div class="architecture" style="background: #f7fafc; padding: 30px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #667eea; margin-bottom: 10px;">📊 System Architecture Flowchart</h2>
+                <p style="color: #4a5568;">Compact Visual Representation</p>
+            </div>
+            
+            <div style="max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <!-- Input Layer -->
+                <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="background: #fff5f5; border: 2px solid #fc8181; padding: 15px; border-radius: 8px; flex: 1; text-align: center;">
+                        <div style="font-size: 2em; margin-bottom: 5px;">🖼️</div>
+                        <div style="font-weight: bold; color: #742a2a;">Image Input</div>
+                        <div style="font-size: 0.85em; color: #742a2a;">224×224 RGB</div>
+                    </div>
+                    <div style="background: #fff5f5; border: 2px solid #fc8181; padding: 15px; border-radius: 8px; flex: 1; text-align: center;">
+                        <div style="font-size: 2em; margin-bottom: 5px;">📝</div>
+                        <div style="font-weight: bold; color: #742a2a;">Text Input</div>
+                        <div style="font-size: 0.85em; color: #742a2a;">Devanagari</div>
+                    </div>
+                </div>
+                
+                <!-- Arrow Down -->
+                <div style="text-align: center; color: #667eea; font-size: 1.5em; margin: 10px 0;">↓</div>
+                
+                <!-- Preprocessing -->
+                <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="background: #fffaf0; border: 2px solid #f6ad55; padding: 12px; border-radius: 8px; flex: 1; text-align: center;">
+                        <div style="font-weight: bold; color: #7c2d12; font-size: 0.9em;">CLIP Transform</div>
+                        <div style="font-size: 0.8em; color: #7c2d12;">Resize & Normalize</div>
+                    </div>
+                    <div style="background: #fffaf0; border: 2px solid #f6ad55; padding: 12px; border-radius: 8px; flex: 1; text-align: center;">
+                        <div style="font-weight: bold; color: #7c2d12; font-size: 0.9em;">BGE-M3 Tokenize</div>
+                        <div style="font-size: 0.8em; color: #7c2d12;">Max 128 tokens</div>
+                    </div>
+                </div>
+                
+                <!-- Arrow Down -->
+                <div style="text-align: center; color: #667eea; font-size: 1.5em; margin: 10px 0;">↓</div>
+                
+                <!-- Encoders -->
+                <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="background: #f0fff4; border: 2px solid #68d391; padding: 15px; border-radius: 8px; flex: 1; text-align: center;">
+                        <div style="font-size: 1.8em; margin-bottom: 5px;">👁️</div>
+                        <div style="font-weight: bold; color: #22543d;">CLIP ViT-B/32</div>
+                        <div style="font-size: 0.85em; color: #22543d;">Output: 512D</div>
+                        <div style="font-size: 0.75em; color: #2f855a; margin-top: 3px;">Fine-tune: 2 layers</div>
+                    </div>
+                    <div style="background: #f0fff4; border: 2px solid #68d391; padding: 15px; border-radius: 8px; flex: 1; text-align: center;">
+                        <div style="font-size: 1.8em; margin-bottom: 5px;">📖</div>
+                        <div style="font-weight: bold; color: #22543d;">BGE-M3</div>
+                        <div style="font-size: 0.85em; color: #22543d;">Output: 1024D</div>
+                        <div style="font-size: 0.75em; color: #2f855a; margin-top: 3px;">Fine-tune: 4 layers</div>
+                    </div>
+                </div>
+                
+                <!-- Arrow Down -->
+                <div style="text-align: center; color: #667eea; font-size: 1.5em; margin: 10px 0;">↓</div>
+                
+                <!-- Hybrid Fusion (Main Model) -->
+                <div style="background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%); border: 3px solid #48bb78; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <div style="font-size: 1.8em; margin-bottom: 5px;">🔮</div>
+                        <div style="font-weight: bold; color: #2c5282; font-size: 1.2em;">M7: Hybrid Fusion</div>
+                        <div style="background: #48bb78; color: white; padding: 3px 10px; border-radius: 15px; display: inline-block; font-size: 0.85em; margin-top: 5px;">🏆 Best Model</div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85em;">
+                        <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                            <div style="font-weight: bold; color: #2c5282;">Step 1: Project</div>
+                            <div style="color: #4a5568;">512D/1024D → 256D</div>
+                        </div>
+                        <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                            <div style="font-weight: bold; color: #2c5282;">Step 2: Attention</div>
+                            <div style="color: #4a5568;">4-head cross-modal</div>
+                        </div>
+                        <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                            <div style="font-weight: bold; color: #2c5282;">Step 3: Gate</div>
+                            <div style="color: #4a5568;">Dynamic weights</div>
+                        </div>
+                        <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                            <div style="font-weight: bold; color: #2c5282;">Step 4: Fuse</div>
+                            <div style="color: #4a5568;">Weighted sum</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Arrow Down -->
+                <div style="text-align: center; color: #667eea; font-size: 1.5em; margin: 10px 0;">↓</div>
+                
+                <!-- Classifier -->
+                <div style="background: #faf5ff; border: 2px solid #b794f4; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 1.8em; margin-bottom: 5px;">🎯</div>
+                    <div style="font-weight: bold; color: #44337a;">Classification Head</div>
+                    <div style="font-size: 0.85em; color: #44337a;">256D → 128D → 2 Classes</div>
+                    <div style="font-size: 0.75em; color: #6b46c1; margin-top: 5px;">Frequency-Inverse Weighted CE Loss</div>
+                </div>
+                
+                <!-- Arrow Down -->
+                <div style="text-align: center; color: #667eea; font-size: 1.5em; margin: 10px 0;">↓</div>
+                
+                <!-- Output -->
+                <div style="background: #fff5f7; border: 2px solid #f687b3; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 1.8em; margin-bottom: 5px;">📊</div>
+                    <div style="font-weight: bold; color: #702459;">Binary Prediction</div>
+                    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 10px; font-size: 0.9em;">
+                        <div style="background: white; padding: 8px 15px; border-radius: 5px;">
+                            <span style="color: #702459;">Class 0: Non-Hate</span>
+                        </div>
+                        <div style="background: white; padding: 8px 15px; border-radius: 5px;">
+                            <span style="color: #702459;">Class 1: Hate</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Performance Metrics -->
+                <div style="margin-top: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 8px; color: white; text-align: center;">
+                    <div style="font-weight: bold; margin-bottom: 10px; font-size: 1.1em;">🏆 M7 Performance</div>
+                    <div style="display: flex; justify-content: space-around; font-size: 0.95em;">
+                        <div><strong>F1:</strong> 0.6834</div>
+                        <div><strong>Acc:</strong> 70.15%</div>
+                        <div><strong>vs Text-Only:</strong> +5.9%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- All Models Comparison -->
+            <div style="max-width: 900px; margin: 30px auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h3 style="color: #667eea; text-align: center; margin-bottom: 20px;">🔬 8 Model Configurations Comparison</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 0.85em;">
+                    <div style="background: #f0fff4; border-left: 4px solid #48bb78; padding: 10px; border-radius: 5px;">
+                        <strong style="color: #22543d;">🥇 M7: Hybrid Fusion</strong>
+                        <div style="color: #2f855a;">F1: 0.6834 | Rank: 1st</div>
+                    </div>
+                    <div style="background: #f7fafc; border-left: 4px solid #cbd5e0; padding: 10px; border-radius: 5px;">
+                        <strong style="color: #2d3748;">🥈 M1: Text-Only</strong>
+                        <div style="color: #4a5568;">F1: 0.6455 | Rank: 2nd</div>
+                    </div>
+                    <div style="background: #f7fafc; border-left: 4px solid #cbd5e0; padding: 10px; border-radius: 5px;">
+                        <strong style="color: #2d3748;">🥉 M8: Hybrid (Text-Removed)</strong>
+                        <div style="color: #4a5568;">F1: 0.6436 | Rank: 3rd</div>
+                    </div>
+                    <div style="background: #f7fafc; border-left: 4px solid #cbd5e0; padding: 10px; border-radius: 5px;">
+                        <strong style="color: #2d3748;">M5: Late Voting</strong>
+                        <div style="color: #4a5568;">F1: 0.6511 | Rank: 4th</div>
+                    </div>
+                    <div style="background: #f7fafc; border-left: 4px solid #cbd5e0; padding: 10px; border-radius: 5px;">
+                        <strong style="color: #2d3748;">M4: Early Fusion</strong>
+                        <div style="color: #4a5568;">F1: 0.6140 | Rank: 5th</div>
+                    </div>
+                    <div style="background: #f7fafc; border-left: 4px solid #cbd5e0; padding: 10px; border-radius: 5px;">
+                        <strong style="color: #2d3748;">M6: Late Bagging</strong>
+                        <div style="color: #4a5568;">F1: 0.6267 | Rank: 6th</div>
+                    </div>
+                    <div style="background: #f7fafc; border-left: 4px solid #cbd5e0; padding: 10px; border-radius: 5px;">
+                        <strong style="color: #2d3748;">M2: Image-Only</strong>
+                        <div style="color: #4a5568;">F1: 0.5952 | Rank: 7th</div>
+                    </div>
+                    <div style="background: #f7fafc; border-left: 4px solid #cbd5e0; padding: 10px; border-radius: 5px;">
+                        <strong style="color: #2d3748;">M3: Image (Text-Removed)</strong>
+                        <div style="color: #4a5568;">F1: 0.5535 | Rank: 8th</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture -->
+        <div class="architecture">
+            
+            <!-- Layer 1: Input -->
+            <div class="layer">
+                <div class="layer-title">
+                    <div class="number">1</div>
+                    Input Layer: Multimodal Meme Data
+                </div>
+                <div class="component-container">
+                    <div class="component input-component">
+                        <div class="component-title">
+                            <span class="component-icon">🖼️</span>
+                            Image Input
+                        </div>
+                        <div class="component-details">
+                            <strong>Original Images:</strong>
+                            <ul>
+                                <li>Devanagari-scripted memes</li>
+                                <li>Social media content</li>
+                                <li>RGB format (224×224)</li>
+                                <li>Contains embedded text</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="component input-component">
+                        <div class="component-title">
+                            <span class="component-icon">📝</span>
+                            Text Input
+                        </div>
+                        <div class="component-details">
+                            <strong>Extracted Text:</strong>
+                            <ul>
+                                <li>Nepali/Devanagari script</li>
+                                <li>OCR-extracted content</li>
+                                <li>Variable length sequences</li>
+                                <li>Low-resource language</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component input-component">
+                        <div class="component-title">
+                            <span class="component-icon">🏷️</span>
+                            Labels
+                        </div>
+                        <div class="component-details">
+                            <strong>Binary Classification:</strong>
+                            <ul>
+                                <li>Class 0: Non-Hate</li>
+                                <li>Class 1: Hate Speech</li>
+                                <li>Imbalanced: 67.4% Hate</li>
+                                <li>Total: 1,068 samples</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlight-box">
+                    <div class="highlight-title">📊 Dataset Characteristics</div>
+                    Training: ~854 samples/fold | 5-fold Stratified CV | Imbalance Ratio: 2.07:1 (Hate:Non-Hate) | Low-resource setting
+                </div>
+            </div>
+
+            <div class="flow-line"></div>
+
+            <!-- Layer 2: Preprocessing -->
+            <div class="layer">
+                <div class="layer-title">
+                    <div class="number">2</div>
+                    Preprocessing & Transformation
+                </div>
+                <div class="component-container">
+                    <div class="component preprocessing-component">
+                        <div class="component-title">
+                            <span class="component-icon">🔄</span>
+                            Image Preprocessing
+                        </div>
+                        <div class="component-details">
+                            <strong>CLIP Image Transform:</strong>
+                            <ul>
+                                <li>Resize to 224×224</li>
+                                <li>Normalize (CLIP stats)</li>
+                                <li>Convert to tensor</li>
+                                <li>Data augmentation (train)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="component preprocessing-component">
+                        <div class="component-title">
+                            <span class="component-icon">🔤</span>
+                            Text Tokenization
+                        </div>
+                        <div class="component-details">
+                            <strong>BGE-M3 Tokenizer:</strong>
+                            <ul>
+                                <li>Devanagari-aware tokenization</li>
+                                <li>Max length: 128 tokens</li>
+                                <li>Padding & truncation</li>
+                                <li>Attention masks</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-line"></div>
+
+            <!-- Layer 3: Feature Encoders -->
+            <div class="layer">
+                <div class="layer-title">
+                    <div class="number">3</div>
+                    Feature Encoder Layer
+                </div>
+                <div class="component-container">
+                    <div class="component encoder-component">
+                        <div class="component-title">
+                            <span class="component-icon">👁️</span>
+                            Image Encoder (CLIP ViT-B/32)
+                        </div>
+                        <div class="component-details">
+                            <strong>Visual Feature Extraction:</strong>
+                            <ul>
+                                <li>Pre-trained CLIP vision encoder</li>
+                                <li>Output dimension: 512</li>
+                                <li>Fine-tuning: Last 2 layers</li>
+                                <li>Vision Transformer architecture</li>
+                                <li>Patch size: 32×32</li>
+                            </ul>
+                            <div style="margin-top: 10px; font-size: 0.9em; color: #2f855a;">
+                                <strong>⚠️ Limitation:</strong> CLIP shows "Devanagari blindness" - struggles with in-image text recognition
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="component encoder-component">
+                        <div class="component-title">
+                            <span class="component-icon">📖</span>
+                            Text Encoder (BGE-M3)
+                        </div>
+                        <div class="component-details">
+                            <strong>Text Feature Extraction:</strong>
+                            <ul>
+                                <li>Pre-trained BGE-M3 model</li>
+                                <li>Multilingual support (Indic)</li>
+                                <li>Output dimension: 1024</li>
+                                <li>Fine-tuning: Last 4 layers</li>
+                                <li>Superior Devanagari coverage</li>
+                            </ul>
+                            <div style="margin-top: 10px; font-size: 0.9em; color: #2f855a;">
+                                <strong>✓ Strength:</strong> Text-only model outperforms image-only by 16.6% F1
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlight-box">
+                    <div class="highlight-title">🎯 Selective Fine-Tuning Strategy</div>
+                    Image Encoder: Freeze first 10 layers, fine-tune last 2 layers | Text Encoder: Freeze first 8 layers, fine-tune last 4 layers | Strategy balances adaptation vs. overfitting in low-resource setting
+                </div>
+            </div>
+
+            <div class="flow-line"></div>
+
+            <!-- Layer 4: Fusion Strategies -->
+            <div class="layer">
+                <div class="layer-title">
+                    <div class="number">4</div>
+                    Fusion & Classifier Layer
+                </div>
+                
+                <div class="highlight-box">
+                    <div class="highlight-title">🔬 Ablation Study: 8 Model Configurations</div>
+                    Comprehensive comparison of unimodal, early fusion, late fusion, and hybrid fusion approaches
+                </div>
+
+                <div class="fusion-grid">
+                    <!-- M1: Text Only -->
+                    <div class="fusion-model">
+                        <div class="fusion-model-title">M1: Text-Only Baseline</div>
+                        <div class="component-details">
+                            <ul style="margin-left: 15px; font-size: 0.9em;">
+                                <li>BGE-M3 encoder only</li>
+                                <li>2-layer MLP classifier</li>
+                                <li>Hidden dim: 256</li>
+                            </ul>
+                        </div>
+                        <div class="fusion-model-perf">
+                            <strong>F1: 0.6455</strong> | Acc: 0.7239 | Rank: 🥈 2nd
+                        </div>
+                    </div>
+
+                    <!-- M2: Image Only -->
+                    <div class="fusion-model">
+                        <div class="fusion-model-title">M2: Image-Only (Original)</div>
+                        <div class="component-details">
+                            <ul style="margin-left: 15px; font-size: 0.9em;">
+                                <li>CLIP ViT-B/32 only</li>
+                                <li>Contains in-image text</li>
+                                <li>2-layer MLP classifier</li>
+                            </ul>
+                        </div>
+                        <div class="fusion-model-perf">
+                            <strong>F1: 0.5952</strong> | Acc: 0.6791 | Rank: 7th
+                        </div>
+                    </div>
+
+                    <!-- M3: Image Only Text Removed -->
+                    <div class="fusion-model">
+                        <div class="fusion-model-title">M3: Image-Only (Text-Removed)</div>
+                        <div class="component-details">
+                            <ul style="margin-left: 15px; font-size: 0.9em;">
+                                <li>CLIP with text removed</li>
+                                <li>Pure visual semantics</li>
+                                <li>Quantifies text contribution</li>
+                            </ul>
+                        </div>
+                        <div class="fusion-model-perf">
+                            <strong>F1: 0.5535</strong> | Acc: 0.6343 | Rank: 8th
+                        </div>
+                    </div>
+
+                    <!-- M4: Early Fusion -->
+                    <div class="fusion-model">
+                        <div class="fusion-model-title">M4: Early Fusion</div>
+                        <div class="component-details">
+                            <ul style="margin-left: 15px; font-size: 0.9em;">
+                                <li>Concatenate features</li>
+                                <li>Joint: 512 + 1024 = 1536</li>
+                                <li>3-layer MLP classifier</li>
+                            </ul>
+                        </div>
+                        <div class="fusion-model-perf">
+                            <strong>F1: 0.6140</strong> | Acc: 0.6940 | Rank: 5th
+                        </div>
+                    </div>
+
+                    <!-- M5: Late Voting -->
+                    <div class="fusion-model">
+                        <div class="fusion-model-title">M5: Late Fusion (Soft Voting)</div>
+                        <div class="component-details">
+                            <ul style="margin-left: 15px; font-size: 0.9em;">
+                                <li>Separate classifiers</li>
+                                <li>Average logits</li>
+                                <li>Equal modality weights</li>
+                            </ul>
+                        </div>
+                        <div class="fusion-model-perf">
+                            <strong>F1: 0.6511</strong> | Acc: 0.6940 | Rank: 4th
+                        </div>
+                    </div>
+
+                    <!-- M6: Late Bagging -->
+                    <div class="fusion-model">
+                        <div class="fusion-model-title">M6: Late Fusion (Bagging k=3)</div>
+                        <div class="component-details">
+                            <ul style="margin-left: 15px; font-size: 0.9em;">
+                                <li>3 image + 3 text classifiers</li>
+                                <li>Ensemble averaging</li>
+                                <li>Fails in low-resource</li>
+                            </ul>
+                        </div>
+                        <div class="fusion-model-perf">
+                            <strong>F1: 0.6267</strong> | Acc: 0.6567 | Rank: 6th
+                        </div>
+                    </div>
+
+                    <!-- M7: Hybrid Fusion (Best) -->
+                    <div class="fusion-model best-model">
+                        <div class="best-badge">🏆 BEST</div>
+                        <div class="fusion-model-title">M7: Hybrid Fusion (Attn+Gating)</div>
+                        <div class="component-details">
+                            <ul style="margin-left: 15px; font-size: 0.9em;">
+                                <li><strong>4-head cross-attention</strong></li>
+                                <li><strong>Dynamic gate network</strong></li>
+                                <li>Adaptive modality weighting</li>
+                                <li>Sample-specific fusion</li>
+                            </ul>
+                        </div>
+                        <div class="fusion-model-perf" style="color: #22543d; font-weight: bold;">
+                            <strong>F1: 0.6834</strong> | Acc: 0.7015 | Rank: 🥇 1st
+                        </div>
+                    </div>
+
+                    <!-- M8: Hybrid Text Removed -->
+                    <div class="fusion-model">
+                        <div class="fusion-model-title">M8: Hybrid (Text-Removed Images)</div>
+                        <div class="component-details">
+                            <ul style="margin-left: 15px; font-size: 0.9em;">
+                                <li>Same hybrid architecture</li>
+                                <li>Text-removed images</li>
+                                <li>Isolates visual semantics</li>
+                            </ul>
+                        </div>
+                        <div class="fusion-model-perf">
+                            <strong>F1: 0.6436</strong> | Acc: 0.7015 | Rank: 🥉 3rd
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Hybrid Fusion Architecture -->
+                <div style="margin-top: 30px;">
+                    <div class="component fusion-component" style="max-width: 100%;">
+                        <div class="component-title">
+                            <span class="component-icon">🔮</span>
+                            M7: Hybrid Fusion Architecture (Detailed)
+                        </div>
+                        <div class="component-details">
+                            <strong>Step 1: Feature Projection</strong>
+                            <ul>
+                                <li>Project image features: 512 → 256 dimensions</li>
+                                <li>Project text features: 1024 → 256 dimensions</li>
+                                <li>Aligns modalities to common space</li>
+                            </ul>
+                            
+                            <strong style="margin-top: 15px; display: block;">Step 2: Cross-Modal Attention</strong>
+                            <ul>
+                                <li>4-head multi-head attention mechanism</li>
+                                <li>Query: Image features (B, 1, 256)</li>
+                                <li>Key/Value: Text features (B, 1, 256)</li>
+                                <li>Output: Attended image features</li>
+                                <li>Learns cross-modal dependencies</li>
+                            </ul>
+                            
+                            <strong style="margin-top: 15px; display: block;">Step 3: Dynamic Gating Network</strong>
+                            <ul>
+                                <li>Input: Concatenated [image, text] features (512D)</li>
+                                <li>2-layer MLP with ReLU activation</li>
+                                <li>Output: 2D weights with softmax (α_img, α_text)</li>
+                                <li>Learns sample-specific modality importance</li>
+                                <li>Adaptive weighting per instance</li>
+                            </ul>
+                            
+                            <strong style="margin-top: 15px; display: block;">Step 4: Weighted Fusion</strong>
+                            <ul>
+                                <li>Weighted sum: fused = α_img × f_img + α_text × f_text</li>
+                                <li>Concatenate: [attended_img, weighted_text]</li>
+                                <li>Fusion layer: 512D → 256D</li>
+                            </ul>
+                            
+                            <strong style="margin-top: 15px; display: block;">Step 5: Classification Head</strong>
+                            <ul>
+                                <li>2-layer MLP: 256 → 128 → 2 classes</li>
+                                <li>ReLU activation & dropout (0.3)</li>
+                                <li>Output: Logits for binary classification</li>
+                            </ul>
+
+                            <div class="code-snippet" style="margin-top: 15px;">
+# Pseudo-code for Hybrid Fusion Forward Pass
+img_proj = Linear(img_features)      # 512 → 256
+txt_proj = Linear(txt_features)      # 1024 → 256
+
+attended_img = MultiHeadAttn(        # Cross-modal attention
+    query=img_proj, 
+    key=txt_proj, 
+    value=txt_proj
+)
+
+concat = Concat([img_proj, txt_proj])    # → 512D
+weights = Softmax(MLP(concat))           # → [α_img, α_text]
+
+fused = Concat([
+    attended_img, 
+    weights[0]*img_proj + weights[1]*txt_proj
+])                                        # → 512D
+
+output = Classifier(fused)                # → 2 classes
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-line"></div>
+
+            <!-- Layer 5: Loss & Optimization -->
+            <div class="layer">
+                <div class="layer-title">
+                    <div class="number">5</div>
+                    Loss Function & Optimization
+                </div>
+                <div class="component-container">
+                    <div class="component classifier-component">
+                        <div class="component-title">
+                            <span class="component-icon">📉</span>
+                            Loss Function
+                        </div>
+                        <div class="component-details">
+                            <strong>Frequency-Inverse Weighted CE:</strong>
+                            <ul>
+                                <li>Class-balanced loss weighting</li>
+                                <li>γ-suppression for imbalance</li>
+                                <li>Label smoothing: ε = 0.1</li>
+                                <li>Handles 2.07:1 class imbalance</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="component classifier-component">
+                        <div class="component-title">
+                            <span class="component-icon">⚙️</span>
+                            Optimization
+                        </div>
+                        <div class="component-details">
+                            <strong>Training Configuration:</strong>
+                            <ul>
+                                <li>Optimizer: AdamW</li>
+                                <li>Learning rate: 1e-4</li>
+                                <li>Batch size: 16</li>
+                                <li>Epochs: 50 (early stopping)</li>
+                                <li>Scheduler: ReduceLROnPlateau</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-line"></div>
+
+            <!-- Layer 6: Evaluation -->
+            <div class="layer">
+                <div class="layer-title">
+                    <div class="number">6</div>
+                    Evaluation & Validation
+                </div>
+                <div class="component-container">
+                    <div class="component output-component">
+                        <div class="component-title">
+                            <span class="component-icon">🎯</span>
+                            Binary Predictions
+                        </div>
+                        <div class="component-details">
+                            <strong>Output:</strong>
+                            <ul>
+                                <li>Class 0: Non-Hate Speech</li>
+                                <li>Class 1: Hate Speech</li>
+                                <li>Confidence scores (probabilities)</li>
+                                <li>Modality weights (M7 only)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="component output-component">
+                        <div class="component-title">
+                            <span class="component-icon">📊</span>
+                            Evaluation Protocol
+                        </div>
+                        <div class="component-details">
+                            <strong>5-Fold Stratified CV:</strong>
+                            <ul>
+                                <li>Primary metric: Macro F1</li>
+                                <li>Secondary: Accuracy, Precision, Recall</li>
+                                <li>Confusion matrices per fold</li>
+                                <li>Statistical significance testing</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Results -->
+                <div class="metrics-box">
+                    <h3>🏆 Best Model Performance (M7: Hybrid Fusion)</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <div class="metric-value">0.6834</div>
+                            <div class="metric-label">F1 Macro Score</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">70.15%</div>
+                            <div class="metric-label">Accuracy</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">0.6817</div>
+                            <div class="metric-label">Precision</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">0.7023</div>
+                            <div class="metric-label">Recall</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">+5.9%</div>
+                            <div class="metric-label">vs. Text-Only</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">+11.3%</div>
+                            <div class="metric-label">vs. Early Fusion</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Findings -->
+            <div class="metrics-box" style="border-left-color: #f59e0b;">
+                <h3 style="color: #f59e0b;">🔍 Key Research Findings</h3>
+                <div class="component-details">
+                    <ol style="margin-left: 20px;">
+                        <li><strong>Multimodal Superiority:</strong> Hybrid fusion (M7) achieves +5.9% F1 over text-only baseline, demonstrating complementary modality benefits</li>
+                        <li><strong>Text Modality Dominance:</strong> Text-only (M1) outperforms image-only (M2) by 16.6% F1, revealing CLIP's Devanagari blindness</li>
+                        <li><strong>Typography Information:</strong> Comparison of M2 vs M3 quantifies 5.8% F1 contribution from in-image text features</li>
+                        <li><strong>Ensemble Failure:</strong> Bagging (M6) underperforms in extreme low-resource setting (N=854), challenging ensemble assumptions</li>
+                        <li><strong>Adaptive Fusion Works:</strong> Dynamic gating (M7) outperforms fixed-weight fusion (M5) by +3.2% F1</li>
+                        <li><strong>Metric Selection Matters:</strong> Accuracy misleads in imbalanced setting (M1 highest accuracy but not best F1)</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Technical Implementation -->
+            <div class="metrics-box" style="border-left-color: #8b5cf6;">
+                <h3 style="color: #8b5cf6;">💻 Technical Implementation Stack</h3>
+                <div class="component-details">
+                    <strong>Core Libraries:</strong>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li><strong>PyTorch 2.0+:</strong> Deep learning framework</li>
+                        <li><strong>Transformers (Hugging Face):</strong> Pre-trained models (CLIP, BGE-M3)</li>
+                        <li><strong>Scikit-learn:</strong> Cross-validation, metrics, stratification</li>
+                        <li><strong>Pandas & NumPy:</strong> Data manipulation</li>
+                        <li><strong>Matplotlib & Seaborn:</strong> Visualization</li>
+                    </ul>
+                    
+                    <strong style="margin-top: 15px; display: block;">Model Checkpoints:</strong>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li><strong>CLIP:</strong> openai/clip-vit-base-patch32</li>
+                        <li><strong>BGE-M3:</strong> BAAI/bge-m3 (superior Indic support)</li>
+                        <li><strong>Alternative:</strong> intfloat/e5-large (compared in ablation)</li>
+                    </ul>
+                    
+                    <strong style="margin-top: 15px; display: block;">Hardware Requirements:</strong>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li>GPU: NVIDIA GPU with 8GB+ VRAM (RTX 3070/V100/T4)</li>
+                        <li>Training time: ~2-3 hours per fold (5 folds total)</li>
+                        <li>Inference: <50ms per sample on GPU</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- System Workflow -->
+            <div class="metrics-box" style="border-left-color: #10b981;">
+                <h3 style="color: #10b981;">🔄 Complete System Workflow</h3>
+                <div class="component-details">
+                    <ol style="margin-left: 20px;">
+                        <li><strong>Data Loading:</strong> Load CSV (Image, Text, Label) + image folder → MultimodalDataset</li>
+                        <li><strong>Stratified Split:</strong> 5-fold cross-validation with stratified sampling (maintains class balance)</li>
+                        <li><strong>Preprocessing:</strong> Apply CLIP transforms (images) + BGE-M3 tokenization (text)</li>
+                        <li><strong>Feature Encoding:</strong> Extract features via CLIP ViT-B/32 (images) + BGE-M3 (text)</li>
+                        <li><strong>Fusion:</strong> Apply selected fusion strategy (M1-M8 configurations)</li>
+                        <li><strong>Training:</strong> Forward pass → Loss computation → Backprop → Optimizer step</li>
+                        <li><strong>Validation:</strong> Evaluate on fold validation set → Early stopping check</li>
+                        <li><strong>Aggregation:</strong> Average metrics across 5 folds → Report mean ± std</li>
+                        <li><strong>Inference:</strong> Load best checkpoint → Predict on test set → Generate submission</li>
+                    </ol>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Legend -->
+        <div class="architecture">
+            <div class="legend">
+                <div class="legend-title">🎨 Component Color Legend</div>
+                <div class="legend-grid">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #fff5f5; border-color: #fc8181;"></div>
+                        <span>Input Layer</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #fffaf0; border-color: #f6ad55;"></div>
+                        <span>Preprocessing</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f0fff4; border-color: #68d391;"></div>
+                        <span>Feature Encoders</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ebf8ff; border-color: #63b3ed;"></div>
+                        <span>Fusion Strategies</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #faf5ff; border-color: #b794f4;"></div>
+                        <span>Classification</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #fff5f7; border-color: #f687b3;"></div>
+                        <span>Output & Evaluation</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-note">
+                <strong>System Architecture Diagram</strong> | Cross-Modal Attention Fusion for Nepali Hate Speech Detection<br>
+                CHiPSAL 2026 Workshop @ LREC | TeamNepAI | Generated: March 1, 2026<br>
+                <em>Paper: "Cross-Modal Attention Fusion with Dynamic Gating for Devanagari Hate Speech Detection in Multimodal Memes"</em>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

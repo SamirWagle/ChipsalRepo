@@ -1,0 +1,109 @@
+# M4: Early Fusion (Concatenation)
+# Paper: Table 4, Row 5
+# Expected F1-Macro: 0.6140
+
+experiment_name: m4_early_fusion
+model_type: early_fusion
+
+# Encoder Configuration
+visual_encoder:
+  model_name: "openai/clip-vit-base-patch32"
+  freeze: false
+  unfreeze_last_n_layers: 2
+
+text_encoder:
+  model_name: "BAAI/bge-m3"
+  freeze: false
+  unfreeze_last_n_layers: 4
+
+# Fusion Architecture
+fusion:
+  type: concatenation
+  input_dim: 1536  # 512 (CLIP) + 1024 (BGE-M3)
+
+# Classification Head
+classifier:
+  hidden_dims: [1536, 768, 256]
+  dropout: 0.5
+  activation: relu
+
+# Training Configuration
+training:
+  num_epochs: 30
+  batch_size: 32
+  learning_rate: 2.0e-5
+  weight_decay: 1.0e-2
+  warmup_steps: 150
+
+# Optimizer
+optimizer:
+  type: AdamW
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Scheduler
+scheduler:
+  type: ReduceLROnPlateau
+  mode: max
+  factor: 0.5
+  patience: 5
+  min_lr: 1.0e-6
+
+# Loss Configuration
+loss:
+  type: CrossEntropyLoss
+  label_smoothing: 0.1
+  class_weight_gamma: 0.3
+
+# Data Configuration
+data:
+  max_length: 77
+  image_size: 224
+  train_csv: "train/train.csv"
+  image_dir: "train/train_images/"
+  text_column: "text"
+  label_column: "label"
+  image_column: "index"
+
+# Augmentation
+augmentation:
+  image_aug_prob: 0.3
+  text_aug_prob: 0.1
+
+# Training Settings
+early_stopping:
+  patience: 10
+  min_delta: 0.001
+  mode: max
+  metric: f1_macro
+
+# Regularization
+regularization:
+  gradient_clip_norm: 1.0
+  use_amp: true
+
+# Logging
+logging:
+  log_interval: 10
+  save_best_only: true
+  tensorboard: true
+  wandb: false
+
+# Cross-Validation
+cross_validation:
+  k_folds: 5
+  stratified: true
+
+# Reproducibility
+seed: 42
+
+# Hardware
+device: cuda
+num_workers: 4
+pin_memory: true
+
+# Checkpointing
+checkpoint:
+  save_dir: "outputs/m4_early_fusion"
+  monitor: f1_macro
+  mode: max

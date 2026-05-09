@@ -1,0 +1,42 @@
+graph TD
+    Start[Research Questions] --> Q1 & Q2 & Q3 & Q4
+    
+    Q1[❓ Does multimodal<br/>outperform unimodal?] --> F1
+    Q2[❓ Which modality<br/>is more important?] --> F2
+    Q3[❓ What fusion<br/>strategy works best?] --> F3
+    Q4[❓ Does text removal<br/>impact performance?] --> F4
+    
+    F1[✅ Finding 1:<br/>Multimodal Superiority] --> F1Detail
+    F1Detail[M7 Hybrid: 0.6834<br/>vs M1 Text: 0.6455<br/>+5.9% F1 improvement<br/>Cross-modal attention helps]
+    
+    F2[✅ Finding 2:<br/>Text Modality Dominance] --> F2Detail
+    F2Detail[M1 Text: 0.6455<br/>vs M2 Image: 0.5952<br/>+16.6% F1 gap<br/>CLIP Devanagari blindness]
+    
+    F3[✅ Finding 3:<br/>Hybrid > Late > Early] --> F3Detail
+    F3Detail[M7 Hybrid: 0.6834<br/>M5 Late: 0.6511<br/>M4 Early: 0.6140<br/>Dynamic gating crucial]
+    
+    F4[✅ Finding 4:<br/>Typography Contribution] --> F4Detail
+    F4Detail[M2 Original: 0.5952<br/>M3 Text-Removed: 0.5535<br/>+5.8% from in-image text<br/>Quantifies visual text value]
+    
+    F1Detail & F2Detail & F3Detail & F4Detail --> Insights
+    
+    Insights[🔬 Key Insights] --> I1 & I2 & I3
+    
+    I1[💡 Cross-modal attention<br/>enables adaptive fusion<br/>Sample-specific weighting]
+    
+    I2[💡 Text features critical<br/>for Devanagari hate speech<br/>OCR quality matters]
+    
+    I3[💡 Ensemble fails<br/>in extreme low-resource<br/>N=854 too small for bagging]
+    
+    I1 & I2 & I3 --> Conclusion
+    
+    Conclusion[🏆 Conclusion:<br/>M7 Hybrid Fusion Best<br/>F1: 0.6834 - Acc: 70.15%<br/>CHiPSAL 2026 Submission]
+    
+    style F1Detail fill:#d4edda,stroke:#28a745
+    style F2Detail fill:#d4edda,stroke:#28a745
+    style F3Detail fill:#d4edda,stroke:#28a745
+    style F4Detail fill:#d4edda,stroke:#28a745
+    style Conclusion fill:#c6f6d5,stroke:#38a169,stroke-width:4px
+    style I1 fill:#cfe2ff,stroke:#0d6efd
+    style I2 fill:#cfe2ff,stroke:#0d6efd
+    style I3 fill:#f8d7da,stroke:#dc3545

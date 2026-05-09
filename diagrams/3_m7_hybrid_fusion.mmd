@@ -1,0 +1,37 @@
+graph TD
+    Start[Input: Multimodal Features] --> ImageEnc & TextEnc
+    
+    ImageEnc[👁️ CLIP ViT-B/32<br/>Visual Features: 512D] --> Proj1
+    TextEnc[📖 BGE-M3<br/>Text Features: 1024D] --> Proj2
+    
+    Proj1[📐 Linear Projection<br/>512D → 256D] --> CrossAttn & Concat1
+    Proj2[📐 Linear Projection<br/>1024D → 256D] --> CrossAttn & Concat1
+    
+    CrossAttn[🔮 Cross-Modal Attention<br/>4-Head MultiHead Attention] --> AttnOut
+    
+    AttnOut[Attended Image Features<br/>256D] --> Concat2
+    
+    Concat1[Concatenate<br/>img_proj + txt_proj<br/>→ 512D] --> GateNet
+    
+    GateNet[🚪 Dynamic Gate Network<br/>2-Layer MLP + Softmax<br/>Output: α_img, α_text] --> Weights
+    
+    Weights[Sample-Specific Weights] --> WeightedSum
+    
+    Proj1 --> WeightedSum
+    Proj2 --> WeightedSum
+    
+    WeightedSum[⚖️ Weighted Sum<br/>α_img × f_img + α_text × f_text] --> Concat2
+    
+    Concat2[Final Fusion<br/>attended_img + weighted_features<br/>→ 512D] --> FusionLayer
+    
+    FusionLayer[🔗 Fusion Layer<br/>Linear: 512D → 256D] --> Classifier
+    
+    Classifier[🎯 Classification Head<br/>256D → 128D → 2 classes<br/>ReLU + Dropout 0.3] --> Output
+    
+    Output[📊 Binary Output<br/>Class 0: Non-Hate<br/>Class 1: Hate] --> End[F1: 0.6834 - Acc: 70.15%]
+    
+    style CrossAttn fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style GateNet fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style WeightedSum fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Classifier fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style End fill:#c8e6c9,stroke:#388e3c,stroke-width:3px

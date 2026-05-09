@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Workflow Diagram - CHiPSAL 2026</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            background: #ffffff;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .diagram-container {
+            background: white;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .diagram-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 30px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* SVG-like boxes */
+        .workflow-box {
+            background: white;
+            border: 2px solid #000;
+            border-radius: 8px;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #000;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .workflow-box-header {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .workflow-box-detail {
+            font-size: 11px;
+            font-weight: normal;
+            color: #333;
+            margin-top: 3px;
+        }
+
+        /* Different box colors for different stages */
+        .input-box {
+            background: #E3F2FD;
+            border-color: #1976D2;
+        }
+
+        .process-box {
+            background: #F3E5F5;
+            border-color: #7B1FA2;
+        }
+
+        .encoder-box {
+            background: #E8F5E9;
+            border-color: #388E3C;
+        }
+
+        .fusion-box {
+            background: #FFF3E0;
+            border-color: #F57C00;
+        }
+
+        .output-box {
+            background: #FCE4EC;
+            border-color: #C2185B;
+        }
+
+        /* Arrow styles */
+        .arrow-down {
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 12px solid #333;
+            margin: 15px auto;
+        }
+
+        .arrow-line {
+            width: 2px;
+            height: 30px;
+            background: #333;
+            margin: 0 auto;
+        }
+
+        /* Grid layout */
+        .row {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .row-single {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .box-item {
+            flex: 1;
+            max-width: 280px;
+        }
+
+        .box-item-wide {
+            width: 600px;
+            max-width: 600px;
+        }
+
+        .connector {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        /* Special styling for main fusion box */
+        .main-fusion {
+            border: 3px solid #F57C00;
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+        }
+
+        .fusion-steps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .fusion-step {
+            background: white;
+            border: 1px solid #F57C00;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Label for parallel branches */
+        .branch-label {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            margin: 5px 0;
+            font-style: italic;
+        }
+
+        /* Model comparison box */
+        .model-comparison {
+            border: 2px dashed #999;
+            padding: 15px;
+            margin: 20px 0;
+            background: #FAFAFA;
+        }
+
+        .model-comparison-title {
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .model-item {
+            background: white;
+            border: 1px solid #999;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 9px;
+            text-align: center;
+        }
+
+        .model-item.best {
+            border: 2px solid #4CAF50;
+            background: #E8F5E9;
+            font-weight: bold;
+        }
+
+        /* Performance metrics */
+        .performance {
+            background: #263238;
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .performance span {
+            margin: 0 15px;
+        }
+
+        /* Side notes */
+        .side-note {
+            position: absolute;
+            right: -150px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 130px;
+            font-size: 9px;
+            color: #666;
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+            .diagram-container {
+                padding: 20px;
+            }
+        }
+
+        /* Dataset info box */
+        .dataset-info {
+            background: #FFFDE7;
+            border: 1px solid #F57F17;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 11px;
+            text-align: center;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-container">
+        <div class="diagram-title">
+            System Workflow: Cross-Modal Attention Fusion for Nepali Hate Speech Detection
+        </div>
+
+        <!-- Input Layer -->
+        <div class="row">
+            <div class="box-item">
+                <div class="workflow-box input-box">
+                    <div class="workflow-box-header">Image Input</div>
+                    <div class="workflow-box-detail">Devanagari Memes</div>
+                    <div class="workflow-box-detail">224×224 RGB</div>
+                </div>
+            </div>
+            <div class="box-item">
+                <div class="workflow-box input-box">
+                    <div class="workflow-box-header">Text Input</div>
+                    <div class="workflow-box-detail">Nepali/Devanagari Script</div>
+                    <div class="workflow-box-detail">OCR Extracted</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dataset Info -->
+        <div class="dataset-info">
+            <strong>Dataset:</strong> 1,068 samples | <strong>Class Distribution:</strong> 67.4% Hate, 32.6% Non-Hate | <strong>Evaluation:</strong> 5-Fold Stratified CV
+        </div>
+
+        <!-- Arrow -->
+        <div class="connector">
+            <div class="arrow-line"></div>
+            <div class="arrow-down"></div>
+        </div>
+
+        <!-- Preprocessing -->
+        <div class="row">
+            <div class="box-item">
+                <div class="workflow-box process-box">
+                    <div class="workflow-box-header">CLIP Transform</div>
+                    <div class="workflow-box-detail">Resize & Normalize</div>
+                    <div class="workflow-box-detail">Data Augmentation</div>
+                </div>
+            </div>
+            <div class="box-item">
+                <div class="workflow-box process-box">
+                    <div class="workflow-box-header">BGE-M3 Tokenization</div>
+                    <div class="workflow-box-detail">Max Length: 128 tokens</div>
+                    <div class="workflow-box-detail">Attention Masks</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="connector">
+            <div class="arrow-line"></div>
+            <div class="arrow-down"></div>
+        </div>
+
+        <!-- Feature Encoders -->
+        <div class="row">
+            <div class="box-item">
+                <div class="workflow-box encoder-box" style="position: relative;">
+                    <div class="workflow-box-header">CLIP ViT-B/32</div>
+                    <div class="workflow-box-detail">Vision Encoder</div>
+                    <div class="workflow-box-detail">Output: 512D</div>
+                    <div class="workflow-box-detail">Fine-tune: 2 layers</div>
+                </div>
+            </div>
+            <div class="box-item">
+                <div class="workflow-box encoder-box" style="position: relative;">
+                    <div class="workflow-box-header">BGE-M3</div>
+                    <div class="workflow-box-detail">Text Encoder</div>
+                    <div class="workflow-box-detail">Output: 1024D</div>
+                    <div class="workflow-box-detail">Fine-tune: 4 layers</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="connector">
+            <div class="arrow-line"></div>
+            <div class="arrow-down"></div>
+        </div>
+
+        <div class="branch-label">Feature Fusion Stage</div>
+
+        <!-- Model Comparison -->
+        <div class="model-comparison">
+            <div class="model-comparison-title">8 Fusion Strategies Evaluated (Ablation Study)</div>
+            <div class="model-grid">
+                <div class="model-item best">
+                    <strong>M7: Hybrid</strong><br>
+                    F1: 0.6834<br>
+                    🏆 Best
+                </div>
+                <div class="model-item">
+                    M1: Text-Only<br>
+                    F1: 0.6455
+                </div>
+                <div class="model-item">
+                    M8: Hybrid-TR<br>
+                    F1: 0.6436
+                </div>
+                <div class="model-item">
+                    M5: Late Voting<br>
+                    F1: 0.6511
+                </div>
+                <div class="model-item">
+                    M4: Early Fusion<br>
+                    F1: 0.6140
+                </div>
+                <div class="model-item">
+                    M6: Bagging<br>
+                    F1: 0.6267
+                </div>
+                <div class="model-item">
+                    M2: Image-Only<br>
+                    F1: 0.5952
+                </div>
+                <div class="model-item">
+                    M3: Image-TR<br>
+                    F1: 0.5535
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Fusion Model (Highlighted) -->
+        <div class="row-single">
+            <div class="box-item-wide">
+                <div class="workflow-box main-fusion">
+                    <div class="workflow-box-header" style="font-size: 16px;">
+                        M7: Hybrid Cross-Modal Attention Fusion
+                    </div>
+                    <div class="workflow-box-detail" style="margin-bottom: 8px;">
+                        4-Head Attention + Dynamic Gating Network
+                    </div>
+                    <div class="fusion-steps">
+                        <div class="fusion-step">
+                            <strong>1. Project</strong><br>
+                            512D/1024D → 256D
+                        </div>
+                        <div class="fusion-step">
+                            <strong>2. Cross-Attention</strong><br>
+                            4-head mechanism
+                        </div>
+                        <div class="fusion-step">
+                            <strong>3. Dynamic Gate</strong><br>
+                            Learn α_img, α_text
+                        </div>
+                        <div class="fusion-step">
+                            <strong>4. Weighted Fusion</strong><br>
+                            Adaptive combination
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="connector">
+            <div class="arrow-line"></div>
+            <div class="arrow-down"></div>
+        </div>
+
+        <!-- Classification Head -->
+        <div class="row-single">
+            <div class="box-item">
+                <div class="workflow-box process-box">
+                    <div class="workflow-box-header">Classification Head</div>
+                    <div class="workflow-box-detail">MLP: 256D → 128D → 2</div>
+                    <div class="workflow-box-detail">ReLU + Dropout (0.3)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="connector">
+            <div class="arrow-line"></div>
+            <div class="arrow-down"></div>
+        </div>
+
+        <!-- Loss Function -->
+        <div class="row-single">
+            <div class="box-item">
+                <div class="workflow-box process-box">
+                    <div class="workflow-box-header">Loss Function</div>
+                    <div class="workflow-box-detail">Frequency-Inverse Weighted CE</div>
+                    <div class="workflow-box-detail">Label Smoothing (ε=0.1)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="connector">
+            <div class="arrow-line"></div>
+            <div class="arrow-down"></div>
+        </div>
+
+        <!-- Optimization -->
+        <div class="row-single">
+            <div class="box-item">
+                <div class="workflow-box process-box">
+                    <div class="workflow-box-header">Optimization</div>
+                    <div class="workflow-box-detail">AdamW | LR: 1e-4 | Batch: 16</div>
+                    <div class="workflow-box-detail">Epochs: 50 | Early Stopping</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="connector">
+            <div class="arrow-line"></div>
+            <div class="arrow-down"></div>
+        </div>
+
+        <!-- Output -->
+        <div class="row-single">
+            <div class="box-item">
+                <div class="workflow-box output-box">
+                    <div class="workflow-box-header">Binary Prediction</div>
+                    <div class="workflow-box-detail">Class 0: Non-Hate | Class 1: Hate</div>
+                    <div class="workflow-box-detail">Confidence Scores + Modality Weights</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance -->
+        <div class="performance">
+            <strong>Best Performance (M7):</strong>
+            <span>F1 Macro: 0.6834</span>
+            <span>Accuracy: 70.15%</span>
+            <span>Precision: 0.6817</span>
+            <span>Recall: 0.7023</span>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 30px; font-size: 11px; color: #666; font-family: 'Times New Roman', serif;">
+            <strong>Figure 1:</strong> Complete system workflow for multimodal hate speech detection in Nepali memes.<br>
+            The hybrid fusion architecture (M7) achieves best performance with F1=0.6834, outperforming unimodal and other fusion strategies.
+        </div>
+    </div>
+</body>
+</html>

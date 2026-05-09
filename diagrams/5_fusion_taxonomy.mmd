@@ -1,0 +1,37 @@
+graph TB
+    Root[Fusion Strategies] --> Unimodal & Multimodal
+    
+    subgraph Unimodal["Unimodal Baselines"]
+        M1[M1: Text-Only<br/>BGE-M3 + MLP<br/>F1: 0.6455 🥈]
+        M2[M2: Image-Only Original<br/>CLIP + MLP<br/>F1: 0.5952]
+        M3[M3: Image Text-Removed<br/>CLIP Visual Only<br/>F1: 0.5535]
+    end
+    
+    subgraph Multimodal["Multimodal Fusion"]
+        Early[Early Fusion] --> M4
+        Late[Late Fusion] --> M5 & M6
+        Hybrid[Hybrid Fusion] --> M7 & M8
+        
+        M4[M4: Concatenation<br/>Concat features → MLP<br/>F1: 0.6140]
+        
+        M5[M5: Soft Voting<br/>Average logits<br/>F1: 0.6511]
+        M6[M6: Bagging k=3<br/>Ensemble 6 classifiers<br/>F1: 0.6267]
+        
+        M7[M7: Attention + Gating<br/>Cross-attn + Dynamic weights<br/>F1: 0.6834 🏆]
+        M8[M8: Hybrid Text-Removed<br/>Same arch, text-removed imgs<br/>F1: 0.6436 🥉]
+    end
+    
+    Unimodal --> Insights1
+    Multimodal --> Insights2
+    
+    Insights1[📊 Insight: Text >> Image<br/>+16.6% F1 advantage]
+    Insights2[📊 Insight: Hybrid > Late > Early<br/>Dynamic fusion wins]
+    
+    M7 --> BestChoice[✅ Best Choice<br/>Adaptive sample-specific fusion]
+    
+    style M7 fill:#c6f6d5,stroke:#38a169,stroke-width:4px
+    style M1 fill:#e6fffa,stroke:#319795,stroke-width:2px
+    style M8 fill:#fef5e7,stroke:#f39c12,stroke-width:2px
+    style BestChoice fill:#d4edda,stroke:#28a745,stroke-width:3px
+    style Insights1 fill:#fff3cd,stroke:#ffc107
+    style Insights2 fill:#fff3cd,stroke:#ffc107

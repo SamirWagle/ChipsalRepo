@@ -1,0 +1,139 @@
+# Model Configuration: M2 - Image-Only (CLIP)
+# This is a baseline model using only visual features
+
+experiment:
+  name: "m2_image_only"
+  description: "Image-Only baseline using CLIP ViT-B/32"
+  model_type: "image_only"
+  seed: 42
+  expected_f1: 0.5952
+
+# Model architecture
+model:
+  visual_encoder: "openai/clip-vit-base-patch32"
+  visual_dim: 512
+  unfreeze_visual_layers: 2  # Unfreeze last 2 layers
+  hidden_dim: 256
+  dropout: 0.4
+  num_classes: 2
+
+# Training hyperparameters
+training:
+  learning_rate: 2e-5
+  batch_size: 32
+  num_epochs: 25
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  gradient_clip: 1.0
+  mixed_precision: true
+  
+  # Optimizer
+  optimizer: "adamw"
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1e-8
+  
+  # Scheduler
+  scheduler: "linear_warmup_decay"
+  
+  # Early stopping
+  early_stopping:
+    patience: 5
+    monitor: "val_f1"
+    mode: "max"
+
+# Loss function
+loss:
+  type: "cross_entropy"
+  label_smoothing: 0.1
+  class_weights: "frequency_inverse"  # [1.0, 2.07]
+  focal_gamma: 0.0  # Standard CE
+
+# Cross-validation
+cross_validation:
+  k_folds: 5
+  stratified: true
+  shuffle: true
+
+# Data configuration
+data:
+  train_csv: "train/train.csv"
+  train_images: "train/train_images"
+  max_length: 77  # Not used, but kept for compatibility
+  
+  # Image preprocessing
+  image_size: 224
+  normalization:
+    mean: [0.48145466, 0.4578275, 0.40821073]  # CLIP defaults
+    std: [0.26862954, 0.26130258, 0.27577711]
+
+# Data augmentation
+augmentation:
+  train:
+    - type: "RandomBrightnessContrast"
+      brightness_limit: 0.2
+      contrast_limit: 0.2
+      p: 0.5
+    - type: "HueSaturationValue"
+      hue_shift_limit: 20
+      sat_shift_limit: 30
+      val_shift_limit: 20
+      p: 0.5
+    - type: "GaussNoise"
+      var_limit: [10.0, 50.0]
+      p: 0.3
+    - type: "GaussianBlur"
+      blur_limit: [3, 7]
+      p: 0.3
+  
+  val:
+    - type: "Normalize"
+      always_apply: true
+
+# Metrics
+metrics:
+  primary: "f1_macro"
+  additional:
+    - "accuracy"
+    - "precision_macro"
+    - "recall_macro"
+    - "f1_hate"
+    - "f1_non_hate"
+
+# Checkpointing
+checkpointing:
+  save_best_only: true
+  monitor: "val_f1"
+  mode: "max"
+  save_dir: "outputs/image_only_{timestamp}"
+
+# Logging
+logging:
+  level: "INFO"
+  log_dir: "outputs/image_only_{timestamp}/logs"
+  tensorboard: true
+  wandb:
+    enabled: false
+    project: "chipsal-2026"
+    entity: null
+
+# Hardware
+hardware:
+  device: "cuda"  # Auto-detect: cuda if available, else cpu
+  num_workers: 4
+  pin_memory: true
+
+# Notes
+notes: |
+  Image-Only baseline (M2) uses only visual features from CLIP.
+  
+  Expected Performance:
+  - F1-Macro: 0.5952
+  - This is 4.5% below text-only (M1), showing images alone are insufficient
+  
+  Key Findings:
+  - CLIP has limited Devanagari understanding
+  - Visual features underperform text features by 8.5%
+  - Demonstrates need for multimodal fusion
+  
+  Paper Reference: Section 4.1, Table 4

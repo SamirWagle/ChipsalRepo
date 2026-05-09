@@ -1,0 +1,195 @@
+# Model Configuration: M8 - Hybrid Fusion (Text-Removed)
+# Hybrid fusion with text-removed images to isolate visual contribution
+
+experiment:
+  name: "m8_hybrid_text_removed"
+  description: "Hybrid fusion with text-removed images"
+  model_type: "hybrid_fusion"
+  seed: 42
+  expected_f1: 0.6436
+
+# Model architecture (same as M7)
+model:
+  # Visual encoder
+  visual_encoder: "openai/clip-vit-base-patch32"
+  visual_dim: 512
+  unfreeze_visual_layers: 2
+  
+  # Text encoder
+  text_encoder: "BAAI/bge-m3"
+  text_dim: 1024
+  unfreeze_text_layers: 4
+  
+  # Fusion architecture
+  fusion_type: "hybrid_attention_gating"
+  hidden_dim: 256
+  
+  # Cross-modal attention
+  attention:
+    num_heads: 4
+    dropout: 0.1
+    use_residual: true
+  
+  # Dynamic gating
+  gating:
+    enabled: true
+    hidden_dim: 128
+    dropout: 0.2
+  
+  # Classifier
+  num_classes: 2
+  dropout: 0.5
+
+# Training hyperparameters (same as M7)
+training:
+  learning_rate: 2e-5
+  batch_size: 32
+  num_epochs: 30
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  gradient_clip: 1.0
+  mixed_precision: true
+  
+  optimizer: "adamw"
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1e-8
+  
+  scheduler: "reduce_on_plateau"
+  scheduler_patience: 3
+  scheduler_factor: 0.5
+  scheduler_min_lr: 1e-7
+  
+  early_stopping:
+    patience: 7
+    monitor: "val_f1"
+    mode: "max"
+
+# Loss function
+loss:
+  type: "cross_entropy"
+  label_smoothing: 0.1
+  class_weights: "frequency_inverse"
+  focal_gamma: 0.0
+
+# Cross-validation
+cross_validation:
+  k_folds: 5
+  stratified: true
+  shuffle: true
+
+# Data configuration
+data:
+  train_csv: "train/train.csv"
+  train_images: "train/train_images_text_removed"  # Text-removed images
+  max_length: 77
+  
+  # Text removal preprocessing
+  text_removal:
+    enabled: true
+    method: "inpainting"
+    detection: "ocr_based"
+    inpaint_radius: 3
+  
+  # Image preprocessing
+  image_size: 224
+  normalization:
+    mean: [0.48145466, 0.4578275, 0.40821073]
+    std: [0.26862954, 0.26130258, 0.27577711]
+
+# Data augmentation (same as M7)
+augmentation:
+  train:
+    - type: "RandomBrightnessContrast"
+      brightness_limit: 0.2
+      contrast_limit: 0.2
+      p: 0.5
+    - type: "HueSaturationValue"
+      hue_shift_limit: 20
+      sat_shift_limit: 30
+      val_shift_limit: 20
+      p: 0.5
+    - type: "GaussNoise"
+      var_limit: [10.0, 50.0]
+      p: 0.3
+    - type: "GaussianBlur"
+      blur_limit: [3, 7]
+      p: 0.3
+  
+  val:
+    - type: "Normalize"
+      always_apply: true
+
+# Metrics
+metrics:
+  primary: "f1_macro"
+  additional:
+    - "accuracy"
+    - "precision_macro"
+    - "recall_macro"
+    - "f1_hate"
+    - "f1_non_hate"
+    - "gating_weights_mean"
+    - "gating_weights_std"
+
+# Checkpointing
+checkpointing:
+  save_best_only: true
+  monitor: "val_f1"
+  mode: "max"
+  save_dir: "outputs/hybrid_text_removed_{timestamp}"
+
+# Logging
+logging:
+  level: "INFO"
+  log_dir: "outputs/hybrid_text_removed_{timestamp}/logs"
+  tensorboard: true
+  log_gating_weights: true
+  log_attention_maps: false
+  wandb:
+    enabled: false
+    project: "chipsal-2026"
+
+# Hardware
+hardware:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+
+# Notes
+notes: |
+  Hybrid Fusion with Text-Removed Images (M8) uses same architecture as M7
+  but with preprocessed images where text has been removed.
+  
+  Expected Performance:
+  - F1-Macro: 0.6436
+  - This is 5.8% worse than M7 with original images (0.6834)
+  - But still 1.0% better than text-only (M1: 0.6455)
+  
+  Key Findings:
+  - Text removal reduces performance by 5.8% (0.6834 → 0.6436)
+  - Pure visual context still provides value in fusion
+  - Gating mechanism adapts: g_visual increases when text removed
+  - Demonstrates complementary nature of modalities
+  
+  Ablation Purpose:
+  - Isolate contribution of pure visual features (no text in image)
+  - Compare with M7 to quantify text-in-image contribution
+  - Validate that image modality provides beyond-OCR information
+  
+  Expected Gating Behavior:
+  - g_text should remain high (~0.70-0.75)
+  - g_visual should increase slightly vs M7 (model compensates)
+  - Overall lower performance confirms text-in-image importance
+  
+  Preprocessing Required:
+  - Run scripts/prepare_data.py --generate_text_removed first
+  - Creates train_images_text_removed/ directory
+  - Uses same preprocessing as M3
+  
+  Comparison:
+  - M7 (original images): 0.6834 F1
+  - M8 (text-removed): 0.6436 F1
+  - Difference: -5.8% (quantifies text-in-image contribution)
+  
+  Paper Reference: Section 4.4, Table 4, Ablation on Text Removal

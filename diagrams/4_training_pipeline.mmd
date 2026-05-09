@@ -1,0 +1,44 @@
+graph TB
+    Start[📁 Load Dataset<br/>1,068 samples<br/>Imbalanced: 67.4% Hate] --> Split
+    
+    Split[📊 5-Fold Stratified CV<br/>Maintain class balance<br/>~854 train per fold] --> Fold1 & Fold2 & Fold3 & Fold4 & Fold5
+    
+    Fold1[Fold 1] --> Train1[🎓 Training]
+    Fold2[Fold 2] --> Train2[🎓 Training]
+    Fold3[Fold 3] --> Train3[🎓 Training]
+    Fold4[Fold 4] --> Train4[🎓 Training]
+    Fold5[Fold 5] --> Train5[🎓 Training]
+    
+    Train1 --> Val1[✅ Validation]
+    Train2 --> Val2[✅ Validation]
+    Train3 --> Val3[✅ Validation]
+    Train4 --> Val4[✅ Validation]
+    Train5 --> Val5[✅ Validation]
+    
+    Val1 --> Metrics1[📈 Metrics]
+    Val2 --> Metrics2[📈 Metrics]
+    Val3 --> Metrics3[📈 Metrics]
+    Val4 --> Metrics4[📈 Metrics]
+    Val5 --> Metrics5[📈 Metrics]
+    
+    Metrics1 & Metrics2 & Metrics3 & Metrics4 & Metrics5 --> Aggregate
+    
+    Aggregate[📊 Aggregate Results<br/>Mean ± Std across folds] --> FinalMetrics
+    
+    FinalMetrics[🏆 Final Performance<br/>F1: 0.6834<br/>Accuracy: 70.15%<br/>Precision: 0.6817<br/>Recall: 0.7023] --> BestModel
+    
+    BestModel[💾 Save Best Checkpoint] --> Inference
+    
+    Inference[🔮 Test Set Inference<br/>Generate Predictions] --> Submission[📤 Submission File]
+    
+    subgraph TrainingDetails["Training Configuration"]
+        TC1[⚙️ AdamW Optimizer<br/>LR: 1e-4]
+        TC2[📉 Class-Weighted CE Loss<br/>Label Smoothing: 0.1]
+        TC3[🛑 Early Stopping<br/>Patience: 10 epochs]
+        TC4[📅 Max Epochs: 50<br/>Batch Size: 16]
+    end
+    
+    style Start fill:#fff5f5,stroke:#fc8181
+    style FinalMetrics fill:#c6f6d5,stroke:#38a169,stroke-width:3px
+    style Submission fill:#e0f2fe,stroke:#0284c7
+    style TrainingDetails fill:#fef3c7,stroke:#f59e0b

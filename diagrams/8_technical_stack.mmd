@@ -1,0 +1,53 @@
+graph TB
+    subgraph Framework["Core Framework"]
+        Torch[PyTorch 2.0+<br/>Deep Learning]
+        HF[🤗 Transformers<br/>Pre-trained Models]
+        SK[Scikit-learn<br/>Metrics & CV]
+    end
+    
+    subgraph Models["Pre-trained Models"]
+        CLIP[CLIP ViT-B/32<br/>openai/clip-vit-base-patch32<br/>Image Encoder]
+        BGE[BGE-M3<br/>BAAI/bge-m3<br/>Text Encoder Multilingual]
+        E5[E5-Large<br/>intfloat/e5-large<br/>Alternative Tested]
+    end
+    
+    subgraph DataTools["Data Processing"]
+        Pandas[Pandas<br/>DataFrame Operations]
+        NumPy[NumPy<br/>Numerical Computing]
+        PIL[PIL/Pillow<br/>Image Processing]
+    end
+    
+    subgraph VizTools["Visualization"]
+        MPL[Matplotlib<br/>Plotting]
+        SNS[Seaborn<br/>Statistical Viz]
+        CM[Confusion Matrices]
+    end
+    
+    subgraph Hardware["Hardware Requirements"]
+        GPU[NVIDIA GPU<br/>8GB+ VRAM<br/>RTX 3070/V100/T4]
+        Time[Training Time<br/>~2-3 hrs per fold<br/>~10-15 hrs total]
+        Inf[Inference Speed<br/><50ms per sample<br/>GPU accelerated]
+    end
+    
+    Framework --> Models
+    Torch --> CLIP & BGE
+    HF --> CLIP & BGE & E5
+    
+    Models --> Processing[Data Processing]
+    Processing --> DataTools
+    
+    DataTools --> Training[Model Training]
+    Training --> Hardware
+    
+    Training --> Evaluation[Evaluation & Viz]
+    Evaluation --> VizTools
+    
+    Hardware --> Deploy[Deployment Ready]
+    VizTools --> Reports[Research Reports]
+    
+    style Torch fill:#ee4c2c,color:#fff,stroke:#c92a1a
+    style HF fill:#ffd21e,stroke:#f9ab00
+    style CLIP fill:#00a67e,color:#fff,stroke:#00875a
+    style BGE fill:#4285f4,color:#fff,stroke:#1967d2
+    style GPU fill:#76b900,color:#fff,stroke:#5a8a00
+    style Deploy fill:#c6f6d5,stroke:#38a169,stroke-width:3px

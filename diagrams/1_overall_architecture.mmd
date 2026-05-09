@@ -1,0 +1,62 @@
+graph TB
+    Start[Start: Multimodal Meme Data] --> Input
+    
+    subgraph Input["🔹 Layer 1: Input Layer"]
+        I1[🖼️ Image Input<br/>224×224 RGB<br/>Devanagari Memes]
+        I2[📝 Text Input<br/>OCR Extracted<br/>Nepali/Devanagari]
+        I3[🏷️ Labels<br/>Binary: Hate/Non-Hate<br/>Imbalanced: 67.4% Hate]
+    end
+    
+    subgraph Preprocess["🔹 Layer 2: Preprocessing"]
+        P1[🔄 CLIP Transform<br/>Resize & Normalize<br/>Data Augmentation]
+        P2[🔤 BGE-M3 Tokenize<br/>Max 128 tokens<br/>Attention Masks]
+    end
+    
+    subgraph Encoders["🔹 Layer 3: Feature Encoders"]
+        E1[👁️ CLIP ViT-B/32<br/>Output: 512D<br/>Fine-tune: Last 2 layers]
+        E2[📖 BGE-M3<br/>Output: 1024D<br/>Fine-tune: Last 4 layers]
+    end
+    
+    subgraph Fusion["🔹 Layer 4: Fusion Strategies"]
+        F1[M1: Text-Only<br/>F1: 0.6455]
+        F2[M2: Image-Only<br/>F1: 0.5952]
+        F3[M4: Early Fusion<br/>F1: 0.6140]
+        F4[M5: Late Voting<br/>F1: 0.6511]
+        F5[M7: Hybrid Fusion ⭐<br/>F1: 0.6834]
+    end
+    
+    subgraph Loss["🔹 Layer 5: Loss & Optimization"]
+        L1[📉 Frequency-Inverse<br/>Weighted CE Loss<br/>Label Smoothing: 0.1]
+        L2[⚙️ AdamW Optimizer<br/>LR: 1e-4<br/>Batch: 16, Epochs: 50]
+    end
+    
+    subgraph Output["🔹 Layer 6: Evaluation"]
+        O1[🎯 Binary Predictions<br/>Class 0: Non-Hate<br/>Class 1: Hate]
+        O2[📊 5-Fold CV<br/>Macro F1: 0.6834<br/>Accuracy: 70.15%]
+    end
+    
+    Input --> Preprocess
+    I1 --> P1
+    I2 --> P2
+    
+    Preprocess --> Encoders
+    P1 --> E1
+    P2 --> E2
+    
+    Encoders --> Fusion
+    E1 --> F1 & F2 & F3 & F4 & F5
+    E2 --> F1 & F3 & F4 & F5
+    
+    Fusion --> Loss
+    F5 --> L1
+    L1 --> L2
+    
+    Loss --> Output
+    L2 --> O1
+    O1 --> O2
+    
+    O2 --> End[End: Hate Speech Detection]
+    
+    style F5 fill:#c6f6d5,stroke:#38a169,stroke-width:3px
+    style Start fill:#fff5f5,stroke:#fc8181
+    style End fill:#fff5f7,stroke:#f687b3

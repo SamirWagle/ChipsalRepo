@@ -1,0 +1,150 @@
+# Model Configuration: M3 - Image-Only (Text-Removed)
+# This model uses images with text manually removed via inpainting
+
+experiment:
+  name: "m3_image_text_removed"
+  description: "Image-Only with text removed - pure visual baseline"
+  model_type: "image_only"
+  seed: 42
+  expected_f1: 0.5535
+
+# Model architecture
+model:
+  visual_encoder: "openai/clip-vit-base-patch32"
+  visual_dim: 512
+  unfreeze_visual_layers: 2
+  hidden_dim: 256
+  dropout: 0.4
+  num_classes: 2
+
+# Training hyperparameters
+training:
+  learning_rate: 2e-5
+  batch_size: 32
+  num_epochs: 25
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  gradient_clip: 1.0
+  mixed_precision: true
+  
+  optimizer: "adamw"
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1e-8
+  
+  scheduler: "linear_warmup_decay"
+  
+  early_stopping:
+    patience: 5
+    monitor: "val_f1"
+    mode: "max"
+
+# Loss function
+loss:
+  type: "cross_entropy"
+  label_smoothing: 0.1
+  class_weights: "frequency_inverse"
+  focal_gamma: 0.0
+
+# Cross-validation
+cross_validation:
+  k_folds: 5
+  stratified: true
+  shuffle: true
+
+# Data configuration
+data:
+  train_csv: "train/train.csv"
+  train_images: "train/train_images_text_removed"  # Preprocessed images
+  max_length: 77
+  
+  # Text removal preprocessing
+  text_removal:
+    enabled: true
+    method: "inpainting"  # Use cv2 inpainting
+    detection: "ocr_based"  # Use OCR to detect text regions
+    inpaint_radius: 3
+  
+  # Image preprocessing
+  image_size: 224
+  normalization:
+    mean: [0.48145466, 0.4578275, 0.40821073]
+    std: [0.26862954, 0.26130258, 0.27577711]
+
+# Data augmentation (same as M2)
+augmentation:
+  train:
+    - type: "RandomBrightnessContrast"
+      brightness_limit: 0.2
+      contrast_limit: 0.2
+      p: 0.5
+    - type: "HueSaturationValue"
+      hue_shift_limit: 20
+      sat_shift_limit: 30
+      val_shift_limit: 20
+      p: 0.5
+    - type: "GaussNoise"
+      var_limit: [10.0, 50.0]
+      p: 0.3
+    - type: "GaussianBlur"
+      blur_limit: [3, 7]
+      p: 0.3
+  
+  val:
+    - type: "Normalize"
+      always_apply: true
+
+# Metrics
+metrics:
+  primary: "f1_macro"
+  additional:
+    - "accuracy"
+    - "precision_macro"
+    - "recall_macro"
+    - "f1_hate"
+    - "f1_non_hate"
+
+# Checkpointing
+checkpointing:
+  save_best_only: true
+  monitor: "val_f1"
+  mode: "max"
+  save_dir: "outputs/image_text_removed_{timestamp}"
+
+# Logging
+logging:
+  level: "INFO"
+  log_dir: "outputs/image_text_removed_{timestamp}/logs"
+  tensorboard: true
+  wandb:
+    enabled: false
+    project: "chipsal-2026"
+
+# Hardware
+hardware:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true
+
+# Notes
+notes: |
+  Image-Only with Text-Removed (M3) uses preprocessed images where
+  text has been removed via inpainting to isolate pure visual features.
+  
+  Expected Performance:
+  - F1-Macro: 0.5535
+  - This is 4.2% below M2 (original images)
+  - 16.6% gap from text-only demonstrates text dominance
+  
+  Key Findings:
+  - Pure visual features (no text) achieve only 55.4% F1
+  - Text removal reduces performance by 7.0% vs M2
+  - Confirms that text is the primary information source
+  - Visual context alone is insufficient for hate detection
+  
+  Preprocessing Required:
+  - Run scripts/prepare_data.py --generate_text_removed first
+  - Creates train_images_text_removed/ directory
+  - Uses OCR + inpainting to remove text regions
+  
+  Paper Reference: Section 4.2, Table 4, Ablation Study
