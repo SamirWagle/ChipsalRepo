@@ -4,6 +4,10 @@
 
 This repository contains the solution for **Subtask A** of the CHiPSAL 2026 Shared Task: **Hate Speech Detection in Nepali-only Memes**.
 
+> **Status:** Research repository. Reported values below are development-validation
+> estimates, not production guarantees or official hidden-test results. Dataset and
+> image reuse remains subject to the shared task's terms.
+
 **Objective**: Detect the presence of hate speech in monolingual Nepali memes.
 - **Label 0**: Non-Hate
 - **Label 1**: Hate
@@ -113,7 +117,7 @@ This creates:
 - Uses pre-trained CLIP for joint understanding
 - Best for zero-shot transfer
 
-## 📊 Results
+## 📊 Development Validation Results
 
 | Model | Val F1 (Macro) |
 |-------|---------------|
@@ -122,7 +126,8 @@ This creates:
 | Multimodal (Concat) | ~0.70 |
 | Multimodal (Attention) | ~0.72 |
 
-*Note: Results may vary based on hyperparameters and random seeds.*
+*These approximate development values depend on split, seed, preprocessing, and
+hyperparameters. Use saved run artifacts or the associated paper for citable results.*
 
 ## 📝 Submission Format
 
@@ -161,6 +166,18 @@ Edit `config.py` to customize:
 1. Fork the repository
 2. Create your feature branch
 3. Submit a pull request
+
+## Limitations and responsible use
+
+- Hate-speech labels are contextual and can encode annotator or dataset bias.
+- OCR errors can disproportionately affect Devanagari and stylized text.
+- Validation performance does not establish safety for automated moderation.
+- High-impact decisions require human review and domain-specific evaluation.
+
+## License status
+
+No repository-wide license is currently declared. Public visibility does not grant
+reuse rights. Check dataset and upstream-model terms separately before use.
 
 ## 📄 Citation
 
